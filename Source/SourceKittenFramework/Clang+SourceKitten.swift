@@ -162,6 +162,10 @@ extension CXComment {
         var ret = ""
         for i in 0..<clang_Comment_getNumChildren(self) {
             let child = clang_Comment_getChild(self, i)
+            if clang_Comment_isWhitespace(child) != 0 {
+                continue
+            }
+
             if let text = clang_TextComment_getText(child).str() {
                 if ret != "" {
                     ret += "\n"
@@ -176,6 +180,11 @@ extension CXComment {
                 print("not text: \(child.kind())")
             }
         }
+
+        if ret.isEmpty {
+            return []
+        }
+
         return [.Para(ret.stringByRemovingCommonLeadingWhitespaceFromLines(), kind)]
     }
 
