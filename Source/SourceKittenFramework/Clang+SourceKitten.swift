@@ -141,7 +141,7 @@ extension CXType {
     }
 }
 
-extension CXComment {
+extension CXComment: SequenceType {
     func paramName() -> String? {
         guard clang_Comment_getKind(self) == CXComment_ParamCommand else { return nil }
         return clang_ParamCommandComment_getParamName(self).bridge()
@@ -151,6 +151,17 @@ extension CXComment {
         return clang_BlockCommandComment_getParagraph(self)
     }
 
+    public func generate() -> AnyGenerator<CXComment> {
+        var i: UInt32 = 0
+        let count = clang_Comment_getNumChildren(self)
+        return anyGenerator {
+            guard i < count else { return nil }
+            let ret = clang_Comment_getChild(self, i)
+            ++i
+            return ret
+        }
+    }
+
     func paragraphToString(kind: String? = nil) -> [Text] {
         if self.kind() == CXComment_VerbatimLine {
             let command = clang_BlockCommandComment_getCommandName(self).bridge() ?? ""
@@ -158,8 +169,7 @@ extension CXComment {
         }
         if self.kind() == CXComment_BlockCommand  {
             var ret = [Text]()
-            for i in 0..<clang_Comment_getNumChildren(self) {
-                let child = clang_Comment_getChild(self, i)
+            for child in self {
                 ret += child.paragraphToString()
             }
             return ret
@@ -173,8 +183,7 @@ extension CXComment {
         var ret = [String]()
         var indented = true
         var command = false
-        for i in 0..<clang_Comment_getNumChildren(self) {
-            let child = clang_Comment_getChild(self, i)
+        for child in self {
             if child.isWhitespace() {
                 continue
             }

@@ -38,8 +38,7 @@ public struct Documentation {
         var d = [Text]()
         var r = [Text]()
 
-        for i in 0..<comment.count() {
-            let c = comment[i]
+        for c in comment {
             switch c.kind().rawValue {
             case CXComment_Text.rawValue:
                 d += c.paragraphToString()
