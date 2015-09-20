@@ -178,6 +178,17 @@ extension CXComment: SequenceType {
         }
     }
 
+    func text() -> String? {
+        switch self.kind() {
+        case .Text:
+            return clang_TextComment_getText(self).bridge()!
+        case .InlineCommand:
+            return "@" + clang_InlineCommandComment_getCommandName(self).bridge()!
+        default:
+            return nil
+        }
+    }
+
     func paragraphToString(kind: String? = nil) -> [Text] {
         if self.kind() == .VerbatimLine {
             let command = clang_BlockCommandComment_getCommandName(self).bridge() ?? ""
@@ -199,30 +210,39 @@ extension CXComment: SequenceType {
         var ret = [String]()
         var indented = true
         var command = false
+        var forceBreak = false
         for child in self {
             if child.isWhitespace() {
+                forceBreak = true
                 continue
             }
-
-            if let text = clang_TextComment_getText(child).bridge() {
+            switch child.kind() {
+            case .Text:
                 if command {
                     let last = ret[ret.count - 1]
-                    ret[ret.count - 1] = last + text
+                    ret[ret.count - 1] = last + child.text()!
                     command = false
                 }
                 else {
+                    let text = child.text()!
                     indented = indented && text.hasPrefix("   ")
                     ret.append(text.stringByRemovingCommonLeadingWhitespaceFromLines())
                 }
-            }
-            else if child.kind() == .InlineCommand {
-                // @autoreleasepool etc. get parsed as commands when not in code blocks
-                ret.append("@" + clang_InlineCommandComment_getCommandName(child).bridge()!)
+                break
+            case .InlineCommand:
                 command = true
-            }
-            else {
+                if ret.count > 0 && !forceBreak {
+                    ret[ret.count - 1] = ret[ret.count - 1] + child.text()!
+                }
+                else {
+                    ret.append(child.text()!)
+                }
+                break
+            default:
                 print("not text: \(child.kind())")
+                break
             }
+            forceBreak = false
         }
 
         if ret.isEmpty {
