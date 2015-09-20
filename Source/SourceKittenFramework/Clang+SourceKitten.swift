@@ -23,6 +23,22 @@ class ClangIndex {
     }
 }
 
+enum CommentKind: UInt32 {
+    case Null = 0
+    case Text = 1
+    case InlineCommand = 2
+    case HTMLStartTag = 3
+    case HTMLEndTag = 4
+    case Paragraph = 5
+    case BlockCommand = 6
+    case ParamCommand = 7
+    case TParamCommand = 8
+    case VerbatimBlockCommand = 9
+    case VerbatimBlockLine = 10
+    case VerbatimLine = 11
+    case FullComment = 12
+}
+
 extension CXString: CustomStringConvertible {
     func bridge() -> String? {
         let str = String.fromCString(clang_getCString(self))
@@ -143,7 +159,7 @@ extension CXType {
 
 extension CXComment: SequenceType {
     func paramName() -> String? {
-        guard clang_Comment_getKind(self) == CXComment_ParamCommand else { return nil }
+        guard self.kind() == .ParamCommand else { return nil }
         return clang_ParamCommandComment_getParamName(self).bridge()
     }
 
@@ -163,11 +179,11 @@ extension CXComment: SequenceType {
     }
 
     func paragraphToString(kind: String? = nil) -> [Text] {
-        if self.kind() == CXComment_VerbatimLine {
+        if self.kind() == .VerbatimLine {
             let command = clang_BlockCommandComment_getCommandName(self).bridge() ?? ""
             return [.Verbatim("@" + command + clang_VerbatimLineComment_getText(self).bridge()!)]
         }
-        if self.kind() == CXComment_BlockCommand  {
+        if self.kind() == .BlockCommand  {
             var ret = [Text]()
             for child in self {
                 ret += child.paragraphToString()
@@ -175,7 +191,7 @@ extension CXComment: SequenceType {
             return ret
         }
 
-        guard self.kind() == CXComment_Paragraph else {
+        guard self.kind() == .Paragraph else {
             print("not a paragraph: \(self.kind())")
             return []
         }
@@ -199,7 +215,7 @@ extension CXComment: SequenceType {
                     ret.append(text.stringByRemovingCommonLeadingWhitespaceFromLines())
                 }
             }
-            else if child.kind() == CXComment_InlineCommand {
+            else if child.kind() == .InlineCommand {
                 // @autoreleasepool etc. get parsed as commands when not in code blocks
                 ret.append("@" + clang_InlineCommandComment_getCommandName(child).bridge()!)
                 command = true
@@ -221,8 +237,8 @@ extension CXComment: SequenceType {
         }
     }
 
-    func kind() -> CXCommentKind {
-        return clang_Comment_getKind(self)
+    func kind() -> CommentKind {
+        return CommentKind(rawValue: clang_Comment_getKind(self).rawValue)!
     }
 
     func commandName() -> String? {

@@ -39,18 +39,18 @@ public struct Documentation {
         var r = [Text]()
 
         for c in comment {
-            switch c.kind().rawValue {
-            case CXComment_Text.rawValue:
+            switch c.kind() {
+            case .Text:
                 d += c.paragraphToString()
                 break
-            case CXComment_InlineCommand.rawValue:
+            case .InlineCommand:
                 break
-            case CXComment_HTMLStartTag.rawValue: break
-            case CXComment_HTMLEndTag.rawValue: break
-            case CXComment_Paragraph.rawValue:
+            case .HTMLStartTag: break
+            case .HTMLEndTag: break
+            case .Paragraph:
                 d += c.paragraphToString()
                 break
-            case CXComment_BlockCommand.rawValue:
+            case .BlockCommand:
                 let command = c.commandName()
                 if command == "return" {
                     r += c.paragraphToString()
@@ -59,12 +59,12 @@ public struct Documentation {
                     d += c.paragraphToString(command)
                 }
                 break
-            case CXComment_ParamCommand.rawValue:
+            case .ParamCommand:
                 params.append(Parameter(comment: c))
                 break
-            case CXComment_VerbatimBlockCommand.rawValue: break
-            case CXComment_VerbatimBlockLine.rawValue: break
-            case CXComment_VerbatimLine.rawValue:
+            case .VerbatimBlockCommand: break
+            case .VerbatimBlockLine: break
+            case .VerbatimLine:
                 d += c.paragraphToString()
                 break
             default: break
@@ -109,7 +109,7 @@ extension SourceDeclaration {
             return nil
         }
         let comment = cursor.parsedComment()
-        guard comment.kind() != CXComment_Null else {
+        guard comment.kind() != .Null else {
             return nil
         }
 
