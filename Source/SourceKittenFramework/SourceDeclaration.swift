@@ -72,6 +72,19 @@ public struct Documentation {
             }
         }
 
+        var i = 0
+        while i + 1 < d.count {
+            switch (d[i], d[i + 1]) {
+            case (.Verbatim(let str1), .Verbatim(let str2)):
+                d[i] = .Verbatim(str1 + "\n" + str2)
+                d.removeAtIndex(i + 1)
+                break
+            default:
+                i += 1
+                break
+            }
+        }
+
         parameters = params
         discussion = d
         returnDiscussion = r

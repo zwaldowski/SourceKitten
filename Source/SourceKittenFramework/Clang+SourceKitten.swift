@@ -153,7 +153,8 @@ extension CXComment {
 
     func paragraphToString(kind: String? = nil) -> [Text] {
         if self.kind() == CXComment_VerbatimLine {
-            return [.Verbatim(clang_VerbatimLineComment_getText(self).bridge()!)]
+            let command = clang_BlockCommandComment_getCommandName(self).bridge() ?? ""
+            return [.Verbatim("@" + command + clang_VerbatimLineComment_getText(self).bridge()!)]
         }
         if self.kind() == CXComment_BlockCommand  {
             var ret = [Text]()
@@ -169,22 +170,30 @@ extension CXComment {
             return []
         }
 
-        var ret = ""
+        var ret = [String]()
+        var indented = true
+        var command = false
         for i in 0..<clang_Comment_getNumChildren(self) {
             let child = clang_Comment_getChild(self, i)
-            if clang_Comment_isWhitespace(child) != 0 {
+            if child.isWhitespace() {
                 continue
             }
 
             if let text = clang_TextComment_getText(child).bridge() {
-                if ret != "" {
-                    ret += "\n"
+                if command {
+                    let last = ret[ret.count - 1]
+                    ret[ret.count - 1] = last + text
+                    command = false
                 }
-                ret += text
+                else {
+                    indented = indented && text.hasPrefix("   ")
+                    ret.append(text.stringByRemovingCommonLeadingWhitespaceFromLines())
+                }
             }
             else if child.kind() == CXComment_InlineCommand {
                 // @autoreleasepool etc. get parsed as commands when not in code blocks
-                ret += "@" + clang_InlineCommandComment_getCommandName(child).bridge()!
+                ret.append("@" + clang_InlineCommandComment_getCommandName(child).bridge()!)
+                command = true
             }
             else {
                 print("not text: \(child.kind())")
@@ -195,7 +204,12 @@ extension CXComment {
             return []
         }
 
-        return [.Para(ret.stringByRemovingCommonLeadingWhitespaceFromLines(), kind)]
+        if indented {
+            return [.Verbatim(ret.joinWithSeparator("\n"))]
+        }
+        else {
+            return [.Para(ret.joinWithSeparator("\n"), kind)]
+        }
     }
 
     func kind() -> CXCommentKind {
@@ -208,6 +222,10 @@ extension CXComment {
 
     func count() -> UInt32 {
         return clang_Comment_getNumChildren(self)
+    }
+
+    func isWhitespace() -> Bool {
+        return clang_Comment_isWhitespace(self) != 0
     }
 
     subscript(idx: UInt32) -> CXComment {
