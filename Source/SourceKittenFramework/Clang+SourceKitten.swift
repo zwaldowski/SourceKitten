@@ -6,7 +6,7 @@
 //  Copyright © 2015 SourceKitten. All rights reserved.
 //
 
-struct ClangIndex {
+class ClangIndex {
     private let cx = clang_createIndex(0, 1)
 
     func open(file file: String, args: [UnsafePointer<Int8>]) -> CXTranslationUnit {
@@ -17,15 +17,21 @@ struct ClangIndex {
             0,
             nil)
     }
+
+    deinit {
+        clang_disposeIndex(cx)
+    }
 }
 
 extension CXString: CustomStringConvertible {
-    func str() -> String? {
-        return String.fromCString(clang_getCString(self))
+    func bridge() -> String? {
+        let str = String.fromCString(clang_getCString(self))
+        clang_disposeString(self)
+        return str
     }
 
     public var description: String {
-        return str() ?? "<null>"
+        return String.fromCString(clang_getCString(self)) ?? "<null>"
     }
 }
 
@@ -46,12 +52,12 @@ extension CXCursor {
         var column: UInt32 = 0
         var offset: UInt32 = 0
         clang_getSpellingLocation(clang_getCursorLocation(self), &cxfile, &line, &column, &offset)
-        return SourceLocation(file: clang_getFileName(cxfile).str() ?? "<none>",
+        return SourceLocation(file: clang_getFileName(cxfile).bridge() ?? "<none>",
             line: line, column: column, offset: offset)
     }
 
     func name() -> String {
-        return clang_getCursorSpelling(self).str()!
+        return clang_getCursorSpelling(self).bridge()!
     }
 
     func type() -> CXType {
@@ -59,7 +65,7 @@ extension CXCursor {
     }
 
     func usr() -> String? {
-        return clang_getCursorUSR(self).str()
+        return clang_getCursorUSR(self).bridge()
     }
 
     func text() -> String {
@@ -107,6 +113,10 @@ extension CXCursor {
         return clang_Cursor_getParsedComment(self)
     }
 
+    func rawComment() -> String? {
+        return clang_Cursor_getRawCommentText(self).bridge()
+    }
+
     func flatMap<T>(block: (CXCursor) -> T?) -> [T] {
         var ret = [T]()
         visit() { cursor, _ in
@@ -121,20 +131,20 @@ extension CXCursor {
 
 extension CXToken {
     func str(tu: CXTranslationUnit) -> String? {
-        return clang_getTokenSpelling(tu, self).str()
+        return clang_getTokenSpelling(tu, self).bridge()
     }
 }
 
 extension CXType {
     func name() -> String? {
-        return clang_getTypeSpelling(self).str()
+        return clang_getTypeSpelling(self).bridge()
     }
 }
 
 extension CXComment {
     func paramName() -> String? {
         guard clang_Comment_getKind(self) == CXComment_ParamCommand else { return nil }
-        return clang_ParamCommandComment_getParamName(self).str()
+        return clang_ParamCommandComment_getParamName(self).bridge()
     }
 
     func paragraph() -> CXComment {
@@ -143,7 +153,7 @@ extension CXComment {
 
     func paragraphToString(kind: String? = nil) -> [Text] {
         if self.kind() == CXComment_VerbatimLine {
-            return [.Verbatim(clang_VerbatimLineComment_getText(self).str()!)]
+            return [.Verbatim(clang_VerbatimLineComment_getText(self).bridge()!)]
         }
         if self.kind() == CXComment_BlockCommand  {
             var ret = [Text]()
@@ -166,7 +176,7 @@ extension CXComment {
                 continue
             }
 
-            if let text = clang_TextComment_getText(child).str() {
+            if let text = clang_TextComment_getText(child).bridge() {
                 if ret != "" {
                     ret += "\n"
                 }
@@ -174,7 +184,7 @@ extension CXComment {
             }
             else if child.kind() == CXComment_InlineCommand {
                 // @autoreleasepool etc. get parsed as commands when not in code blocks
-                ret += "@" + clang_InlineCommandComment_getCommandName(child).str()!
+                ret += "@" + clang_InlineCommandComment_getCommandName(child).bridge()!
             }
             else {
                 print("not text: \(child.kind())")
@@ -193,7 +203,7 @@ extension CXComment {
     }
 
     func commandName() -> String? {
-        return clang_BlockCommandComment_getCommandName(self).str()
+        return clang_BlockCommandComment_getCommandName(self).bridge()
     }
 
     func count() -> UInt32 {

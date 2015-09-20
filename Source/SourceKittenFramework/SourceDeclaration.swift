@@ -101,8 +101,7 @@ extension SourceDeclaration {
             return nil
         }
 
-        let rawComment = clang_Cursor_getRawCommentText(cursor).str()
-        if let rawComment = rawComment where rawComment.containsString("@name") {
+        if let rawComment = cursor.rawComment() where rawComment.containsString("@name") {
             let nsString = rawComment as NSString
             let regex = try! NSRegularExpression(pattern: "@name +(.*)", options: [])
             let range = NSRange(location: 0, length: nsString.length)
