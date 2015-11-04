@@ -28,7 +28,6 @@ public struct SourceDeclaration {
     let name: String?
     let usr: String?
     let declaration: String?
-    let documentation: Documentation?
     let commentBody: String?
     var children: [SourceDeclaration]
 
@@ -88,7 +87,6 @@ extension SourceDeclaration {
         name = cursor.name()
         usr = cursor.usr()
         declaration = cursor.declaration()
-        documentation = Documentation(comment: cursor.parsedComment())
         commentBody = cursor.commentBody()
         children = cursor.flatMap(SourceDeclaration.init).rejectPropertyMethods()
     }

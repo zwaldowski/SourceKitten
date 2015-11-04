@@ -32,9 +32,6 @@ private func toOutputDictionary(decl: SourceDeclaration) -> [String: AnyObject] 
     set(.USR, decl.usr)
     set(.ParsedDeclaration, decl.declaration)
     set(.DocumentationComment, decl.commentBody)
-
-    setA(.DocResultDiscussion, decl.documentation?.returnDiscussion.map(toOutputDictionary))
-    setA(.DocParameters, decl.documentation?.parameters.map(toOutputDictionary))
     setA(.Substructure, decl.children.map(toOutputDictionary))
 
     if decl.commentBody != nil {

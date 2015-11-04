@@ -201,8 +201,8 @@ extension String {
                 column: 1,
                 offset: UInt32(markRange.location))
             return SourceDeclaration(type: .Mark, location: location, extent: (location, location),
-                name: "MARK: " + markString, usr: nil, declaration: nil,
-                documentation: nil, commentBody: nil, children: [])
+                name: "MARK: " + markString, usr: nil, declaration: nil, commentBody: nil,
+                children: [])
         }
     }
 
