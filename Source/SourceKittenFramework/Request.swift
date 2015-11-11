@@ -47,6 +47,9 @@ public enum Request {
     /// for which to generate code completion options and array of compiler arguments.
     case CodeCompletionRequest(file: String, contents: String, offset: Int64, arguments: [String])
 
+    /// ObjC Swift Interface
+    case Interface(file: String, uuid: String)
+
     /// xpc_object_t version of the Request to be sent to SourceKit.
     private var xpcValue: xpc_object_t {
         switch self {
@@ -84,6 +87,19 @@ public enum Request {
                 "key.offset": offset,
                 "key.compilerargs": (arguments.map { $0 as XPCRepresentable } as XPCArray)
             ])
+        case .Interface(let file, let uuid):
+            return toXPC([
+                "key.request": sourcekitd_uid_get_from_cstr("source.request.editor.open.interface.header"),
+                "key.name": uuid,
+                "key.filepath": file,
+                "key.compilerargs": ([
+                    "-x",
+                    "objective-c",
+                    file,
+                    "-isysroot",
+                    sdkPath()
+                    ] as XPCArray)
+                ])
         }
     }
 

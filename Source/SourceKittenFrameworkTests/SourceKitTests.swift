@@ -120,4 +120,33 @@ class SourceKitTests: XCTestCase {
             print("the following strings were removed: \(expectedStrings.subtract(actual))")
         }
     }
+
+    func testObjCSwiftInterfaceHeader() {
+        let file = NSURL(fileURLWithPath: __FILE__)
+            .URLByDeletingLastPathComponent!
+            .URLByDeletingLastPathComponent!
+            .URLByAppendingPathComponent("SourceKittenFramework/clang-c/Documentation.h")
+            .path!
+        let uuid = NSUUID().UUIDString
+        print(Request.Interface(file: file, uuid: uuid).send())
+        let args = [
+            "-x",
+            "objective-c",
+            file,
+            "-isysroot",
+            sdkPath()
+        ]
+        let cursorInfo = Request.CursorInfo(file: uuid, offset: 1386, arguments: args).send()
+        let dict: NSDictionary = [
+            "key.annotated_decl": "<Declaration>struct CXComment</Declaration>",
+            "key.filepath": file,
+            "key.kind": "source.lang.swift.decl.struct",
+            "key.length": 6,
+            "key.name": "CXComment",
+            "key.offset": 1533,
+            "key.typename": "CXComment.Type",
+            "key.usr": "c:@SA@CXComment"
+        ]
+        XCTAssertEqual(toAnyObject(cursorInfo), dict)
+    }
 }
