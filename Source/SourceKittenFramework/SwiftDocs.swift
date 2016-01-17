@@ -27,7 +27,7 @@ public struct SwiftDocs {
         self.init(
             file: file,
             dictionary: Request.EditorOpen(file).send(),
-            cursorInfoRequest: Request.cursorInfoRequestForFilePath(file.path, arguments: arguments)
+            cursorInfoRequest: Request(filePath: file.path, arguments: arguments)
         )
     }
 
@@ -36,9 +36,9 @@ public struct SwiftDocs {
 
     - parameter file:              Swift file to document.
     - parameter dictionary:        editor.open response from SourceKit.
-    - parameter cursorInfoRequest: SourceKit xpc dictionary to use to send cursorinfo request.
+    - parameter cursorInfoRequest: Request to send for Cursor Info.
     */
-    public init(file: File, dictionary: XPCDictionary, cursorInfoRequest: xpc_object_t?) {
+    public init(file: File, dictionary: XPCDictionary, cursorInfoRequest: Request?) {
         var dictionary = dictionary
 
         self.file = file

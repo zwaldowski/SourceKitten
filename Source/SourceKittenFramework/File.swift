@@ -118,7 +118,7 @@ public final class File {
     - parameter dictionary:        Dictionary to process.
     - parameter cursorInfoRequest: Cursor.Info request to get declaration information.
     */
-    public func processDictionary(dictionary: XPCDictionary, cursorInfoRequest: xpc_object_t? = nil, syntaxMap: SyntaxMap? = nil) -> XPCDictionary {
+    public func processDictionary(dictionary: XPCDictionary, cursorInfoRequest: Request? = nil, syntaxMap: SyntaxMap? = nil) -> XPCDictionary {
         var dictionary = dictionary
         
         if let cursorInfoRequest = cursorInfoRequest {
@@ -164,11 +164,11 @@ public final class File {
     - parameter documentedTokenOffsets: Offsets that are likely documented.
     - parameter cursorInfoRequest:      Cursor.Info request to get declaration information.
     */
-    internal func furtherProcessDictionary(dictionary: XPCDictionary, documentedTokenOffsets: [Int], cursorInfoRequest: xpc_object_t, syntaxMap: SyntaxMap) -> XPCDictionary {
+    internal func furtherProcessDictionary(dictionary: XPCDictionary, documentedTokenOffsets: [Int], cursorInfoRequest: Request, syntaxMap: SyntaxMap) -> XPCDictionary {
         var dictionary = dictionary
         let offsetMap = generateOffsetMap(documentedTokenOffsets, dictionary: dictionary)
         for offset in offsetMap.keys.reverse() { // Do this in reverse to insert the doc at the correct offset
-            let response = processDictionary(Request.sendCursorInfoRequest(cursorInfoRequest, atOffset: Int64(offset))!, cursorInfoRequest: nil, syntaxMap: syntaxMap)
+            let response = processDictionary(cursorInfoRequest.sendAtOffset(numericCast(offset))!, syntaxMap: syntaxMap)
             if let kind = SwiftDocKey.getKind(response),
                 _ = SwiftDeclarationKind(rawValue: kind),
                 parentOffset = offsetMap[offset].flatMap({ Int64($0) }),
@@ -190,7 +190,7 @@ public final class File {
                `processDictionary(_:cursorInfoRequest:syntaxMap:)` on its elements, only keeping comment marks
                and declarations.
     */
-    private func newSubstructure(dictionary: XPCDictionary, cursorInfoRequest: xpc_object_t?, syntaxMap: SyntaxMap?) -> XPCArray? {
+    private func newSubstructure(dictionary: XPCDictionary, cursorInfoRequest: Request?, syntaxMap: SyntaxMap?) -> XPCArray? {
         return SwiftDocKey.getSubstructure(dictionary)?
             .map({ $0 as! XPCDictionary })
             .filter(isDeclarationOrCommentMark)
@@ -205,7 +205,7 @@ public final class File {
     - parameter dictionary:        Dictionary to update.
     - parameter cursorInfoRequest: Cursor.Info request to get declaration information.
     */
-    private func dictWithCommentMarkNamesCursorInfo(dictionary: XPCDictionary, cursorInfoRequest: xpc_object_t) -> XPCDictionary? {
+    private func dictWithCommentMarkNamesCursorInfo(dictionary: XPCDictionary, cursorInfoRequest: Request) -> XPCDictionary? {
         if let kind = SwiftDocKey.getKind(dictionary) {
             // Only update dictionaries with a 'kind' key
             if kind == SyntaxKind.CommentMark.rawValue {
@@ -213,10 +213,10 @@ public final class File {
                 if let markName = markNameFromDictionary(dictionary) {
                     return [SwiftDocKey.Name.rawValue: markName]
                 }
-            } else if let decl = SwiftDeclarationKind(rawValue: kind) where decl != .VarParameter {
+            } else if let decl = SwiftDeclarationKind(rawValue: kind),
+                offset = SwiftDocKey.getNameOffset(dictionary) where decl != .VarParameter {
                 // Update if kind is a declaration (but not a parameter)
-                var updateDict = Request.sendCursorInfoRequest(cursorInfoRequest,
-                    atOffset: SwiftDocKey.getNameOffset(dictionary)!) ?? XPCDictionary()
+                var updateDict = cursorInfoRequest.sendAtOffset(offset) ?? XPCDictionary()
 
                 // Skip kinds, since values from editor.open are more accurate than cursorinfo
                 updateDict.removeValueForKey(SwiftDocKey.Kind.rawValue)

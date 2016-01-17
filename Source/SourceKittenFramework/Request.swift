@@ -88,34 +88,28 @@ public enum Request {
     }
 
     /**
-    Create a Request.CursorInfo.xpcValue() from a file path and compiler arguments.
+    Create a Request.CursorInfo from a file path and compiler arguments.
 
     - parameter filePath:  Path of the file to create request.
     - parameter arguments: Compiler arguments.
-
-    - returns: xpc_object_t representation of the Request, if successful.
     */
-    internal static func cursorInfoRequestForFilePath(filePath: String?, arguments: [String]) -> xpc_object_t? {
-        if let path = filePath {
-            return Request.CursorInfo(file: path, offset: 0, arguments: arguments).xpcValue
+    internal init?(filePath: String?, arguments: [String]) {
+        guard let filePath = filePath else {
+            return nil
         }
-        return nil
+        self = .CursorInfo(file: filePath, offset: 0, arguments: arguments)
     }
 
     /**
     Send a Request.CursorInfo by updating its offset. Returns SourceKit response if successful.
 
-    - parameter request: xpc_object_t representation of Request.CursorInfo
     - parameter offset:  Offset to update request.
 
     - returns: SourceKit response if successful.
     */
-    internal static func sendCursorInfoRequest(request: xpc_object_t, atOffset offset: Int64) -> XPCDictionary? {
-        if offset == 0 {
-            return nil
-        }
-        xpc_dictionary_set_int64(request, SwiftDocKey.Offset.rawValue, offset)
-        return Request.CustomRequest(request).send()
+    internal func sendAtOffset(offset: Int64) -> XPCDictionary? {
+        guard offset != 0, case let .CursorInfo(file, _, arguments) = self else { return nil }
+        return Request.CursorInfo(file: file, offset: offset, arguments: arguments).send()
     }
 
     /**
