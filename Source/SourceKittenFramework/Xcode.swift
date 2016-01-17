@@ -19,10 +19,21 @@ Run `xcodebuild clean build` along with any passed in build arguments.
 internal func runXcodeBuild(arguments: [String], inPath path: String) -> String? {
     fputs("Running xcodebuild\n", stderr)
 
+    var arguments = arguments
+    if let toolchain = NSProcessInfo.processInfo().environment["XCODE_DEFAULT_TOOLCHAIN_OVERRIDE"] {
+        arguments.insertContentsOf([ "-toolchain", toolchain ], at: arguments.startIndex)
+    }
+    arguments.appendContentsOf(["clean", "build"])
+
+    var environment = NSProcessInfo.processInfo().environment
+    environment["CODE_SIGN_IDENTITY"] = ""
+    environment["CODE_SIGNING_REQUIRED"] = "NO"
+
     let task = NSTask()
     task.launchPath = "/usr/bin/xcodebuild"
     task.currentDirectoryPath = path
-    task.arguments = arguments + ["clean", "build", "CODE_SIGN_IDENTITY=", "CODE_SIGNING_REQUIRED=NO"]
+    task.arguments = arguments
+    task.environment = environment
 
     let pipe = NSPipe()
     task.standardOutput = pipe

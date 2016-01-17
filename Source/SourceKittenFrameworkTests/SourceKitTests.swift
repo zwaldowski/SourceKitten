@@ -26,7 +26,11 @@ private func run(executable: String, arguments: [String]) -> String? {
 }
 
 private func sourcekitStringsStartingWith(pattern: String) -> Set<String> {
-    let sourceKitServicePath = (((run("/usr/bin/xcrun", arguments: ["-f", "swiftc"])! as NSString)
+    var arguments = ["-f", "swiftc"]
+    if let toolchain = NSProcessInfo.processInfo().environment["XCODE_DEFAULT_TOOLCHAIN_OVERRIDE"] {
+        arguments += [ "--toolchain", toolchain ]
+    }
+    let sourceKitServicePath = (((run("/usr/bin/xcrun", arguments: arguments)! as NSString)
         .stringByDeletingLastPathComponent as NSString)
         .stringByDeletingLastPathComponent as NSString)
         .stringByAppendingPathComponent("lib/sourcekitd.framework/XPCServices/SourceKitService.xpc/Contents/MacOS/SourceKitService")
