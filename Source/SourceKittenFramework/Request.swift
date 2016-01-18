@@ -9,32 +9,6 @@
 import Foundation
 import SwiftXPC
 
-/// dispatch_once_t token used to only initialize SourceKit once per session.
-private var sourceKitInitializationToken = dispatch_once_t(0)
-
-/// SourceKit UID to String map.
-private var uidStringMap = [UInt64: String]()
-
-/**
-Cache SourceKit requests for strings from UIDs
-
-- parameter uid: UID received from sourcekitd* responses.
-
-- returns: Cached UID string if available, nil otherwise.
-*/
-internal func stringForSourceKitUID(uid: UInt64) -> String? {
-    if uid < UInt64(UInt32.max) {
-        // UID's are always higher than UInt32.max
-        return nil
-    } else if let string = uidStringMap[uid] {
-        return string
-    } else if let uidString = String(UTF8String: sourcekitd_uid_get_string_ptr(uid)) {
-        uidStringMap[uid] = uidString
-        return uidString
-    }
-    return nil
-}
-
 /// Represents a SourceKit request.
 public enum Request {
     /// An `editor.open` request for the given File.
@@ -45,40 +19,53 @@ public enum Request {
     /// for which to generate code completion options and array of compiler arguments.
     case CodeCompletionRequest(file: String, contents: String, offset: Int64, arguments: [String])
 
-    /// xpc_object_t version of the Request to be sent to SourceKit.
-    private var xpcValue: xpc_object_t {
+    private enum Command: UID {
+        case EditorOpen            = "source.request.editor.open"
+        case CursorInfo            = "source.request.cursorinfo"
+        case CodeCompletionRequest = "source.request.codecomplete"
+    }
+
+    private enum Keys: UID {
+        case Request           = "key.request"
+        case Name              = "key.name"
+        case SourceFile        = "key.sourcefile"
+        case SourceText        = "key.sourcetext"
+        case Offset            = "key.offset"
+        case CompilerArguments = "key.compilerargs"
+    }
+
+    private var value: SourceKit.Request {
         switch self {
-        case .EditorOpen(let file):
-            let openRequestUID = sourcekitd_uid_get_from_cstr("source.request.editor.open")
+        case let .EditorOpen(file):
             if let path = file.path {
-                return toXPC([
-                    "key.request": openRequestUID,
-                    "key.name": path,
-                    "key.sourcefile": path
+                return .init([
+                    Keys.Request:    .init(Command.EditorOpen),
+                    Keys.Name:       .init(path),
+                    Keys.SourceFile: .init(path)
                 ])
             } else {
-                return toXPC([
-                    "key.request": openRequestUID,
-                    "key.name": String(file.contents.hash),
-                    "key.sourcetext": file.contents
+                return .init([
+                    Keys.Request:    .init(Command.EditorOpen),
+                    Keys.Name:       .init(String(file.contents.hash)),
+                    Keys.SourceText: .init(file.contents)
                 ])
             }
-        case .CursorInfo(let file, let offset, let arguments):
-            return toXPC([
-                "key.request": sourcekitd_uid_get_from_cstr("source.request.cursorinfo"),
-                "key.name": file,
-                "key.sourcefile": file,
-                "key.offset": offset,
-                "key.compilerargs": (arguments.map { $0 as XPCRepresentable } as XPCArray)
+        case let .CursorInfo(file, offset, arguments):
+            return .init([
+                Keys.Request:    .init(Command.CursorInfo),
+                Keys.Name:       .init(file),
+                Keys.SourceFile: .init(file),
+                Keys.Offset:     .init(offset),
+                Keys.CompilerArguments: .init(arguments.lazy.map(SourceKit.Request.String)),
             ])
-        case .CodeCompletionRequest(let file, let contents, let offset, let arguments):
-            return toXPC([
-                "key.request": sourcekitd_uid_get_from_cstr("source.request.codecomplete"),
-                "key.name": file,
-                "key.sourcefile": file,
-                "key.sourcetext": contents,
-                "key.offset": offset,
-                "key.compilerargs": (arguments.map { $0 as XPCRepresentable } as XPCArray)
+        case let .CodeCompletionRequest(file, contents, offset, arguments):
+            return .init([
+                Keys.Request:    .init(Command.CodeCompletionRequest),
+                Keys.Name:       .init(file),
+                Keys.SourceFile: .init(file),
+                Keys.SourceText: .init(contents),
+                Keys.Offset:     .init(offset),
+                Keys.CompilerArguments: .init(arguments.lazy.map(SourceKit.Request.String)),
             ])
         }
     }
@@ -103,6 +90,28 @@ public enum Request {
 
     - returns: SourceKit response if successful.
     */
+    internal func sendAtOffset(offset: Int64) throws -> Response? {
+        guard offset != 0, case let .CursorInfo(file, _, arguments) = self else { return nil }
+        return try Request.CursorInfo(file: file, offset: offset, arguments: arguments).send()
+    }
+
+    /**
+     Sends the request to SourceKit and return the response as an XPCDictionary.
+
+     - returns: SourceKit output as an XPC dictionary.
+     */
+    public func send() throws -> Response {
+        return try SourceKit.shared.sendRequest(value)
+    }
+
+    /**
+    Send a Request.CursorInfo by updating its offset. Returns SourceKit response if successful.
+
+    - parameter offset:  Offset to update request.
+
+    - returns: SourceKit response if successful.
+    */
+    @available(*, deprecated)
     internal func sendAtOffset(offset: Int64) -> XPCDictionary? {
         guard offset != 0, case let .CursorInfo(file, _, arguments) = self else { return nil }
         return Request.CursorInfo(file: file, offset: offset, arguments: arguments).send()
@@ -113,20 +122,18 @@ public enum Request {
 
     - returns: SourceKit output as an XPC dictionary.
     */
+    @available(*, deprecated)
     public func send() -> XPCDictionary {
-        dispatch_once(&sourceKitInitializationToken) {
-            sourcekitd_initialize()
-        }
-        guard let response = sourcekitd_send_request_sync(xpcValue) else {
+        guard let response = SourceKit.shared.sendRequest(value) as xpc_object_t? else {
             fatalError("SourceKit response nil for request \(self)")
         }
         return replaceUIDsWithSourceKitStrings(fromXPC(response))
     }
 }
 
-// MARK: CustomStringConvertible
+// MARK: CustomDebugStringConvertible
 
-extension Request: CustomStringConvertible {
+extension Request: CustomDebugStringConvertible {
     /// A textual representation of `Request`.
-    public var description: String { return xpcValue.description }
+    public var debugDescription: String { return value.debugDescription }
 }

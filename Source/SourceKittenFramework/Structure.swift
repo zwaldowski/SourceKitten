@@ -10,6 +10,7 @@ import Foundation
 import SwiftXPC
 
 /// Represents the structural information in a Swift source file.
+@available(*, deprecated)
 public struct Structure {
     /// Structural information as an XPCDictionary.
     public let dictionary: XPCDictionary
@@ -21,7 +22,7 @@ public struct Structure {
     */
     public init(sourceKitResponse: XPCDictionary) {
         var sourceKitResponse = sourceKitResponse
-        sourceKitResponse.removeValueForKey(SwiftDocKey.SyntaxMap.rawValue)
+        sourceKitResponse.removeValueForKey(SwiftDocKeyOld.SyntaxMap.rawValue)
         dictionary = sourceKitResponse
     }
 

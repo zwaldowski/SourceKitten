@@ -8,8 +8,17 @@
 
 /// Represents a single Swift syntax token.
 public struct SyntaxToken {
+
     /// Token type. See SyntaxKind.
-    public let type: String
+    public let kind: SyntaxKind
+    @available(*, unavailable)
+    public var typeNew: SyntaxKind {
+        return kind
+    }
+    @available(*, unavailable)
+    public var type: String {
+        return String(kind.rawValue)
+    }
     /// Token offset.
     public let offset: Int
     /// Token length.
@@ -17,7 +26,7 @@ public struct SyntaxToken {
 
     /// Dictionary representation of SyntaxToken. Useful for NSJSONSerialization.
     public var dictionaryValue: [String: AnyObject] {
-        return ["type": type, "offset": offset, "length": length]
+        return ["type": String(kind.rawValue), "offset": offset, "length": length]
     }
 
     /**
@@ -27,11 +36,22 @@ public struct SyntaxToken {
     - parameter offset: Token offset.
     - parameter length: Token length.
     */
-    public init(type: String, offset: Int, length: Int) {
-        self.type = SyntaxKind(rawValue: type)?.rawValue ?? type
+    public init(kind: SyntaxKind, offset: Int, length: Int) {
+        self.kind = kind
         self.offset = offset
         self.length = length
     }
+}
+
+extension SyntaxToken: SourceKitResponseConvertible {
+
+    public init(sourceKitResponse response: Response) throws {
+        let dict = try response.value(of: Response.Dictionary.self)
+        self.kind = try dict.uidFor(SwiftDocKey.Kind, of: SyntaxKind.self)
+        self.offset = (try? numericCast(dict.valueFor(SwiftDocKey.Offset, of: Int64.self))) ?? 0
+        self.length = (try? numericCast(dict.valueFor(SwiftDocKey.Length, of: Int64.self))) ?? 0
+    }
+
 }
 
 // MARK: Equatable
@@ -47,7 +67,7 @@ Returns true if `lhs` SyntaxToken is equal to `rhs` SyntaxToken.
 - returns: True if `lhs` SyntaxToken is equal to `rhs` SyntaxToken.
 */
 public func ==(lhs: SyntaxToken, rhs: SyntaxToken) -> Bool {
-    return (lhs.type == rhs.type) && (lhs.offset == rhs.offset) && (lhs.length == rhs.length)
+    return (lhs.kind == rhs.kind) && (lhs.offset == rhs.offset) && (lhs.length == rhs.length)
 }
 
 // MARK: CustomStringConvertible

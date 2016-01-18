@@ -19,13 +19,25 @@ struct SyntaxCommand: CommandType {
     func run(options: SyntaxOptions) -> Result<(), SourceKittenError> {
         if !options.file.isEmpty {
             if let file = File(path: options.file) {
-                print(SyntaxMap(file: file))
-                return .Success()
+                do {
+                    print(try SyntaxMap(file: file))
+                    return .Success()
+                } catch let error as Response.Error {
+                    return .Failure(.SourceKitError(error))
+                } catch {
+                    return .Failure(error as! SourceKittenError)
+                }
             }
             return .Failure(.ReadFailed(path: options.file))
         }
-        print(SyntaxMap(file: File(contents: options.text)))
-        return .Success()
+        do {
+            try print(SyntaxMap(file: File(contents: options.text)))
+            return .Success()
+        } catch let error as Response.Error {
+            return .Failure(.SourceKitError(error))
+        } catch {
+            return .Failure(error as! SourceKittenError)
+        }
     }
 }
 

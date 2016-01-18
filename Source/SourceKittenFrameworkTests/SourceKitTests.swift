@@ -45,83 +45,84 @@ class SourceKitTests: XCTestCase {
     func testSyntaxKinds() {
         let expected: [SyntaxKind] = [
             .Argument,
+            .Parameter,
+            .Keyword,
+            .Identifier,
+            .TypeIdentifier,
+            .BuildConfigKeyword,
+            .BuildConfigId,
+            .AttributeId,
             .AttributeBuiltin,
-            .AttributeID,
-            .BuildconfigID,
-            .BuildconfigKeyword,
+            .Number,
+            .String,
+            .StringInterpolation,
             .Comment,
-            .CommentMark,
-            .CommentURL,
             .DocComment,
             .DocCommentField,
-            .Identifier,
-            .Keyword,
-            .Number,
-            .ObjectLiteral,
-            .Parameter,
+            .CommentMarker,
+            .CommentURL,
             .Placeholder,
-            .String,
-            .StringInterpolationAnchor,
-            .Typeidentifier
+            .ObjectLiteral,
         ]
-        let actual = sourcekitStringsStartingWith("source.lang.swift.syntaxtype.")
-        let expectedStrings = Set(expected.map { $0.rawValue })
-        XCTAssertEqual(
-            actual,
-            expectedStrings
-        )
-        if actual != expectedStrings {
-            print("the following strings were added: \(actual.subtract(expectedStrings))")
-            print("the following strings were removed: \(expectedStrings.subtract(actual))")
+        // SourceKit occasionally builds these through interpolation, so check prefixes only.
+        var actual = sourcekitStringsStartingWith("source.lang.swift.syntaxtype.")
+        for string in expected.lazy.map({ String($0.rawValue) }) {
+            if actual.remove(string) != nil { continue }
+            if let indexToRemove = actual.indexOf(string.hasPrefix) {
+                actual.removeAtIndex(indexToRemove)
+            }
         }
+        XCTAssert(actual.isEmpty, "the following strings were unmatched: \(actual)")
     }
 
     func testSwiftDeclarationKind() {
         let expected: [SwiftDeclarationKind] = [
+            .FunctionFree,
+            .MethodInstance,
+            .MethodStatic,
+            .MethodClass,
+            .AccessorGetter,
+            .AccessorSetter,
+            .AccessorWillSet,
+            .AccessorDidSet,
+            .AccessorAddress,
+            .AccessorMutableAddress,
+            .Constructor,
+            .Destructor,
+            .FunctionPrefixOperator,
+            .FunctionPostfixOperator,
+            .FunctionInfixOperator,
+            .Subscript,
+            .VarGlobal,
+            .VarInstance,
+            .VarStatic,
+            .VarClass,
+            .VarLocal,
+            .VarParam,
+            .Module,
             .Class,
+            .Struct,
             .Enum,
-            .Enumcase,
-            .Enumelement,
+            .EnumCase,
+            .EnumElement,
+            .Protocol,
             .Extension,
+            .ExtensionStruct,
             .ExtensionClass,
             .ExtensionEnum,
             .ExtensionProtocol,
-            .ExtensionStruct,
-            .FunctionAccessorAddress,
-            .FunctionAccessorDidset,
-            .FunctionAccessorGetter,
-            .FunctionAccessorMutableaddress,
-            .FunctionAccessorSetter,
-            .FunctionAccessorWillset,
-            .FunctionConstructor,
-            .FunctionDestructor,
-            .FunctionFree,
-            .FunctionMethodClass,
-            .FunctionMethodInstance,
-            .FunctionMethodStatic,
-            .FunctionOperator,
-            .FunctionSubscript,
-            .GenericTypeParam,
-            .Module,
-            .Protocol,
-            .Struct,
-            .Typealias,
-            .VarClass,
-            .VarGlobal,
-            .VarInstance,
-            .VarLocal,
-            .VarParameter,
-            .VarStatic
+            .TypeAlias,
+            .GenericTypeParam
         ]
-        let actual = sourcekitStringsStartingWith("source.lang.swift.decl.")
-        let expectedStrings = Set(expected.map { $0.rawValue })
-        XCTAssertEqual(
-            actual,
-            expectedStrings
-        )
-        if actual != expectedStrings {
-            print("the following strings were added: \(actual.subtract(expectedStrings))")
-            print("the following strings were removed: \(expectedStrings.subtract(actual))")
+        // SourceKit occasionally builds these through interpolation, so check prefixes only.
+        var actual = sourcekitStringsStartingWith("source.lang.swift.decl.")
+        for string in expected.lazy.map({ String($0.rawValue) }) {
+            if actual.remove(string) != nil { continue }
+            if let indexToRemove = actual.indexOf(string.hasPrefix) {
+                actual.removeAtIndex(indexToRemove)
+            }
         }
+        XCTAssert(actual.isEmpty, "the following strings were unmatched: \(actual)")
     }
+
 }

@@ -6,9 +6,6 @@
 //  Copyright © 2015 SourceKitten. All rights reserved.
 //
 
-import Foundation
-import SwiftXPC
-
 extension Dictionary {
     private mutating func addIfNotNil(key: Key, _ value: Value?) {
         if let value = value {
@@ -17,22 +14,21 @@ extension Dictionary {
     }
 }
 
-extension NSData {
-    private func stringFromRange(start: Int, end: Int) -> String? {
-        let start = start
-        let length = end - start
-        if length < 0 {
-            return nil
-        }
-        var buffer = [CChar](count: length, repeatedValue: 0)
-        getBytes(&buffer, range: NSRange(location: start, length: length))
-        return String.fromCString(&buffer)
-    }
-}
-
 public struct CodeCompletionItem: CustomStringConvertible {
-    public let kind: String
-    public let context: String
+
+    public enum Context: UID {
+        case None = "source.codecompletion.context.none"
+        case ExpressionSpecific = "source.codecompletion.context.exprspecific"
+        case Local = "source.codecompletion.context.local"
+        case CurrentNominal = "source.codecompletion.context.thisclass"
+        case Super = "source.codecompletion.context.superclass"
+        case OutsideNominal = "source.codecompletion.context.otherclass"
+        case CurrentModule = "source.codecompletion.context.thismodule"
+        case OtherModule = "source.codecompletion.context.othermodule"
+    }
+
+    public let kind: SwiftDeclarationKind
+    public let context: Context
     public let name: String?
     public let descriptionKey: String?
     public let sourcetext: String?
@@ -41,25 +37,11 @@ public struct CodeCompletionItem: CustomStringConvertible {
     public let docBrief: String?
     public let associatedUSRs: String?
 
-    public init(kind: String, context: String, name: String?,
-                descriptionKey: String?, sourcetext: String?, typeName: String?,
-                moduleName: String?, docBrief: String?, associatedUSRs: String?) {
-        self.kind = kind
-        self.context = context
-        self.name = name
-        self.descriptionKey = descriptionKey
-        self.sourcetext = sourcetext
-        self.typeName = typeName
-        self.moduleName = moduleName
-        self.docBrief = docBrief
-        self.associatedUSRs = associatedUSRs
-    }
-
     /// Dictionary representation of CodeCompletionItem. Useful for NSJSONSerialization.
     public var dictionaryValue: [String: AnyObject] {
         var dict = [
-            "kind": kind,
-            "context": context
+            "kind": String(kind.rawValue),
+            "context": String(context.rawValue),
         ]
         dict.addIfNotNil("name", name)
         dict.addIfNotNil("descriptionKey", descriptionKey)
@@ -74,53 +56,46 @@ public struct CodeCompletionItem: CustomStringConvertible {
     public var description: String {
         return toJSON(dictionaryValue)
     }
+}
 
-    public static func parseResponse(response: XPCDictionary) -> [CodeCompletionItem] {
-        return (response["key.results"] as? NSData).map { parseItems($0) } ?? []
+extension CodeCompletionItem: SourceKitResponseConvertible {
+
+    private enum ResponseKey: UID {
+        case Results        = "key.results"
+        case Kind           = "key.kind"
+        case Context        = "key.context"
+        case Name           = "key.name"
+        case Description    = "key.description"
+        case SourceText     = "key.sourcetext"
+        case TypeName       = "key.typename"
+        case ModuleName     = "key.modulename"
+        case DocBrief       = "key.doc.brief"
+        case AssociatedUSRs = "key.associated_usrs"
     }
 
-    public static func parseItems(data: NSData) -> [CodeCompletionItem] {
-        var buffer = UInt64(0)
-        data.getBytes(&buffer, range: NSRange(location: 8, length: 8))
-        let maxRange = Int(buffer.littleEndian) + 16
-        var smallerBuffer = UInt32(0)
-        let notFound = UInt32.max
-        let offsets = 16.stride(to: maxRange, by: 45).map { offset in
-            return (offset + 8).stride(through: offset + 32, by: 4).map { offset -> Int? in
-                data.getBytes(&smallerBuffer, range: NSRange(location: offset, length: 4))
-                if smallerBuffer != notFound {
-                    return maxRange + Int(smallerBuffer)
-                }
-                return nil
-            }
-        }
-        let flatOffsets = offsets.flatMap({ $0 }).flatMap({ $0 })
-        let offsetPairs = zip(flatOffsets, Array(flatOffsets.dropFirst()) + [data.length])
-        var offsetsToStrings = [Int: String]()
-        for (offset, nextOffset) in offsetPairs {
-            if let string = data.stringFromRange(offset, end: nextOffset) {
-                offsetsToStrings[offset] = string
-            }
-        }
-        return 16.stride(to: maxRange, by: 45).enumerate().flatMap { index, offset -> CodeCompletionItem? in
-            data.getBytes(&buffer, range: NSRange(location: offset, length: 8))
-            guard let kind = stringForSourceKitUID(buffer) else {
-                return nil
-            }
-            data.getBytes(&buffer, range: NSRange(location: offset + 36, length: 8))
-            guard let context = stringForSourceKitUID(buffer) else {
-                return nil
-            }
-            return CodeCompletionItem(kind: kind,
-                context: context,
-                name: offsets[index][0].flatMap({ offsetsToStrings[$0] }),
-                descriptionKey: offsets[index][1].flatMap({ offsetsToStrings[$0] }),
-                sourcetext: offsets[index][2].flatMap({ offsetsToStrings[$0] }),
-                typeName: offsets[index][3].flatMap({ offsetsToStrings[$0] }),
-                moduleName: offsets[index][4].flatMap({ offsetsToStrings[$0] }),
-                docBrief: offsets[index][5].flatMap({ offsetsToStrings[$0] }),
-                associatedUSRs: offsets[index][6].flatMap({ offsetsToStrings[$0] })
-            )
+    public init(sourceKitResponse response: Response) throws {
+        let dict = try response.value(of: Response.Dictionary.self)
+        let kind = try dict.uidFor(ResponseKey.Kind, of: SwiftDeclarationKind.self)
+        let context = try dict.uidFor(ResponseKey.Context, of: Context.self)
+        self.init(kind: kind, context: context,
+            name: try? dict.valueFor(ResponseKey.Name),
+            descriptionKey: try? dict.valueFor(ResponseKey.Description),
+            sourcetext: try? dict.valueFor(ResponseKey.SourceText),
+            typeName: try? dict.valueFor(ResponseKey.TypeName),
+            moduleName: try? dict.valueFor(ResponseKey.ModuleName),
+            docBrief: try? dict.valueFor(ResponseKey.DocBrief),
+            associatedUSRs: try? dict.valueFor(ResponseKey.AssociatedUSRs))
+
+    }
+
+    public static func parseResponse(response: Response) -> [CodeCompletionItem] {
+        do {
+            let dict = try response.value(of: Response.Dictionary.self)
+            let array = try dict.valueFor(ResponseKey.Results, of: Response.Array.self)
+            return try array.map(CodeCompletionItem.init)
+        } catch {
+            return []
         }
     }
+
 }

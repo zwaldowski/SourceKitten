@@ -6,6 +6,8 @@
 //  Copyright (c) 2015 SourceKitten. All rights reserved.
 //
 
+import SourceKittenFramework
+
 /// Possible errors within SourceKitten.
 enum SourceKittenError: ErrorType, CustomStringConvertible {
     /// One or more argument was invalid.
@@ -17,6 +19,10 @@ enum SourceKittenError: ErrorType, CustomStringConvertible {
     /// Failed to generate documentation.
     case DocFailed
 
+    /// SourceKit failure
+    /// TODO: place this better
+    case SourceKitError(Response.Error)
+
     /// An error message corresponding to this error.
     var description: String {
         switch self {
@@ -26,6 +32,8 @@ enum SourceKittenError: ErrorType, CustomStringConvertible {
             return "Failed to read file at '\(path)'"
         case .DocFailed:
             return "Failed to generate documentation"
+        case let .SourceKitError(error):
+            return String(error)
         }
     }
 }

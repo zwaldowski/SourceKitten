@@ -10,7 +10,43 @@ import Foundation
 import SwiftXPC
 
 /// SourceKit response dictionary keys.
-internal enum SwiftDocKey: String {
+/// https://github.com/apple/swift/blob/master/tools/SourceKit/tools/sourcekitd/lib/API/sourcekitdAPI-Common.cpp
+internal enum SwiftDocKey: UID {
+    /// Annotated declaration (String).
+    case AnnotatedDeclaration = "key.annotated_decl"
+    /// Body length (Int64).
+    case BodyLength           = "key.bodylength"
+    /// Body offset (Int64).
+    case BodyOffset           = "key.bodyoffset"
+    /// Diagnostic stage (String).
+    case DiagnosticStage      = "key.diagnostic_stage"
+    /// File path (String).
+    case FilePath             = "key.filepath"
+    /// Full XML docs (String).
+    case FullXMLDocs          = "key.doc.full_as_xml"
+    /// Kind (String).
+    case Kind                 = "key.kind"
+    /// Length (Int64).
+    case Length               = "key.length"
+    /// Name (String).
+    case Name                 = "key.name"
+    /// Name length (Int64).
+    case NameLength           = "key.namelength"
+    /// Name offset (Int64).
+    case NameOffset           = "key.nameoffset"
+    /// Offset (Int64).
+    case Offset               = "key.offset"
+    /// Substructure (Array of Dictionary).
+    case Substructure         = "key.substructure"
+    /// Syntax map (Array of Dictionary).
+    case SyntaxMap            = "key.syntaxmap"
+    /// Type name (String).
+    case TypeName             = "key.typename"
+}
+
+/// SourceKit response dictionary keys.
+@available(*, deprecated)
+internal enum SwiftDocKeyOld: String {
     // MARK: SourceKit Keys
 
     /// Annotated declaration (String).
@@ -86,7 +122,7 @@ internal enum SwiftDocKey: String {
 
     - returns: Typed value of a dictionary key.
     */
-    private static func get<T>(key: SwiftDocKey, _ dictionary: XPCDictionary) -> T? {
+    private static func get<T>(key: SwiftDocKeyOld, _ dictionary: XPCDictionary) -> T? {
         return dictionary[key.rawValue] as! T?
     }
 

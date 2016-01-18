@@ -42,7 +42,7 @@ public struct SwiftDocs {
         var dictionary = dictionary
 
         self.file = file
-        let syntaxMapData = dictionary.removeValueForKey(SwiftDocKey.SyntaxMap.rawValue) as! NSData
+        let syntaxMapData = dictionary.removeValueForKey(SwiftDocKeyOld.SyntaxMap.rawValue) as! NSData
         let syntaxMap = SyntaxMap(data: syntaxMapData)
         dictionary = file.processDictionary(dictionary, cursorInfoRequest: cursorInfoRequest, syntaxMap: syntaxMap)
         if let cursorInfoRequest = cursorInfoRequest {

@@ -43,8 +43,14 @@ struct CompleteCommand: CommandType {
         let request = Request.CodeCompletionRequest(file: path, contents: contents,
             offset: Int64(options.offset),
             arguments: args)
-        print(CodeCompletionItem.parseResponse(request.send()))
-        return .Success()
+        do {
+            try print(CodeCompletionItem.parseResponse(request.send()))
+            return .Success()
+        } catch let error as Response.Error {
+            return .Failure(.SourceKitError(error))
+        } catch {
+            return .Failure(error as! SourceKittenError)
+        }
     }
 }
 

@@ -6,6 +6,8 @@
 //  Copyright © 2015 SourceKitten. All rights reserved.
 //
 
+import SWXMLHash
+
 public struct Parameter {
     let name: String
     let discussion: [Text]

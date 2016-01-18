@@ -12,12 +12,12 @@ public func declarationsToJSON(decl: [String: [SourceDeclaration]]) -> String {
 
 private func toOutputDictionary(decl: SourceDeclaration) -> [String: AnyObject] {
     var dict = [String: AnyObject]()
-    func set(key: SwiftDocKey, _ value: AnyObject?) {
+    func set(key: SwiftDocKeyOld, _ value: AnyObject?) {
         if let value = value {
             dict[key.rawValue] = value
         }
     }
-    func setA(key: SwiftDocKey, _ value: [AnyObject]?) {
+    func setA(key: SwiftDocKeyOld, _ value: [AnyObject]?) {
         if let value = value where value.count > 0 {
             dict[key.rawValue] = value
         }

@@ -23,11 +23,25 @@ public struct SyntaxMap {
         self.tokens = tokens
     }
 
+    private enum ResponseKey: UID {
+        case Results        = "key.results"
+        case Kind           = "key.kind"
+        case Context        = "key.context"
+        case Name           = "key.name"
+        case Description    = "key.description"
+        case SourceText     = "key.sourcetext"
+        case TypeName       = "key.typename"
+        case ModuleName     = "key.modulename"
+        case DocBrief       = "key.doc.brief"
+        case AssociatedUSRs = "key.associated_usrs"
+    }
+
     /**
     Create a SyntaxMap by passing in NSData from a SourceKit `editor.open` response to be parsed.
 
     - parameter data: NSData from a SourceKit `editor.open` response
     */
+    @available(*, deprecated)
     public init(data: NSData) {
         var numberOfTokens = 0
         data.getBytes(&numberOfTokens, range: NSRange(location: 8, length: 8))
@@ -40,29 +54,11 @@ public struct SyntaxMap {
             data.getBytes(&length, range: NSRange(location: 12 + parserOffset, length: 4))
 
             return SyntaxToken(
-                type: stringForSourceKitUID(uid) ?? "unknown",
+                kind: SyntaxKind(bitPattern: uid) ?? .Unknown,
                 offset: offset,
                 length: length >> 1
             )
         }
-    }
-
-    /**
-    Create a SyntaxMap from a SourceKit `editor.open` response.
-
-    - parameter sourceKitResponse: SourceKit `editor.open` response.
-    */
-    public init(sourceKitResponse: XPCDictionary) {
-        self.init(data: SwiftDocKey.getSyntaxMap(sourceKitResponse)!)
-    }
-
-    /**
-    Create a SyntaxMap from a File to be parsed.
-
-    - parameter file: File to be parsed.
-    */
-    public init(file: File) {
-        self.init(sourceKitResponse: Request.EditorOpen(file).send())
     }
 
     /**
@@ -76,9 +72,13 @@ public struct SyntaxMap {
         // be lazy for performance
         let tokensBeforeOffset = tokens.lazy.reverse().filter { $0.offset < offset }
 
-        let docTypes = SyntaxKind.docComments().map({$0.rawValue})
-        let isDoc = { (token: SyntaxToken) in docTypes.contains(token.type) }
-        let isNotDoc = { !isDoc($0) }
+        func isDoc(token: SyntaxToken) -> Bool {
+            return SyntaxKind.docComments.contains(token.kind)
+        }
+
+        func isNotDoc(token: SyntaxToken) -> Bool {
+            return !isDoc(token)
+        }
 
         guard let commentBegin = tokensBeforeOffset.indexOf(isDoc) else { return nil }
         let tokensBeginningComment = tokensBeforeOffset.suffixFrom(commentBegin)
@@ -95,6 +95,30 @@ public struct SyntaxMap {
             }
         }
     }
+}
+
+extension SyntaxMap: SourceKitResponseConvertible {
+
+    /**
+    Create a SyntaxMap from a SourceKit `editor.open` response.
+
+    - parameter sourceKitResponse: SourceKit `editor.open` response.
+    */
+    public init(sourceKitResponse response: Response) throws {
+        let dict = try response.value(of: Response.Dictionary.self)
+        let array = try dict.valueFor(SwiftDocKey.SyntaxMap, of: Response.Array.self)
+        try self.init(tokens: array.map(SyntaxToken.init))
+    }
+
+    /**
+     Create a SyntaxMap from a File to be parsed.
+
+     - parameter file: File to be parsed.
+     */
+    public init(file: File) throws {
+        try self.init(sourceKitResponse: try Request.EditorOpen(file).send())
+    }
+
 }
 
 // MARK: CustomStringConvertible

@@ -6,240 +6,269 @@
 //  Copyright (c) 2014 Realm. All rights reserved.
 //
 
-import XPC
+import sourcekitd
 
-// SourceKit function declarations
-// Taken from dissassembling sourcekitd and SourceKitService
-// /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/sourcekitd.framework
+final class SourceKit {
 
-/**
-Cancel request
-*/
-// sourcekitd_cancel_request
+    static let shared = SourceKit()
 
-/**
-Initialize the SourceKit XPC service. This should only be done once per session (as Xcode does).
+    init() {
+        sourcekitd_initialize()
+    }
 
-- returns: ??? maybe 0 for success and 1 for failure?
-*/
-@_silgen_name("sourcekitd_initialize") internal func sourcekitd_initialize() -> Int
+    deinit {
+        sourcekitd_shutdown()
+    }
 
-/**
-Create XPC array
-*/
-// sourcekitd_request_array_create
+    // MARK: - Utility
 
-/**
-Set int64 value in array
-*/
-// sourcekitd_request_array_set_int64
+    private func describe<T>(value: T, takeOwnership owning: Bool = true, @noescape using function: T -> UnsafeMutablePointer<Int8>) -> String! {
+        let buffer = function(value)
+        guard buffer != nil else { return nil }
+        let length = Int(strlen(buffer))
+        if let string = String(bytesNoCopy: buffer, length: length, encoding: NSUTF8StringEncoding, freeWhenDone: owning) {
+            return string
+        } else if owning {
+            buffer.destroy()
+        }
+        return nil
+    }
 
-/**
-Set string value in array
-*/
-// sourcekitd_request_array_set_string
+    private func describe<T>(value: T, @noescape getBuffer: T -> UnsafePointer<Int8>, @noescape getLength: T -> Int) -> String! {
+        let pointer = getBuffer(value)
+        guard pointer != nil else { return nil }
+        let length = getLength(value)
+        return String(bytesNoCopy: UnsafeMutablePointer(pointer), length: length, encoding: NSUTF8StringEncoding, freeWhenDone: false)
+    }
 
-/**
-Set string value in array from string buffer
-*/
-// sourcekitd_request_array_set_stringbuf
+    // MARK: -
 
-/**
-Set uid value in array
-*/
-// sourcekitd_request_array_set_uid
+    func setInterruptedConnectionHandler(handler: sourcekitd_interrupted_connection_handler_t) {
+        sourcekitd_set_interrupted_connection_handler(handler)
+    }
 
-/**
-Set xpc_object_t value in array
-*/
-// sourcekitd_request_array_set_value
+    // MARK: - UIDs
 
-/**
-Create XPC request from YAML c-string
-Interesting...
-*/
-// sourcekitd_request_create_from_yaml
+    func createUID(buffer: UnsafeBufferPointer<UInt8>) -> UID {
+        return UID(sourcekitd_uid_get_from_buf(UnsafePointer(buffer.baseAddress), buffer.count))
+    }
 
-/**
-Copy string description of XPC request
-Interesting...
-*/
-// sourcekitd_request_description_copy
+    // MARK: - Request API
 
-/**
-Print string description of XPC request to STDOUT
-*/
-@_silgen_name("sourcekitd_request_description_dump") internal func sourcekitd_request_description_dump(_: xpc_object_t?) -> Void
+    enum Request {
+        case Dictionary([SourceKittenFramework.UID: Request])
+        case Array([Request])
+        case String(Swift.String)
+        case Int(Swift.Int64)
+        case UID(SourceKittenFramework.UID)
+    }
 
-/**
-Create XPC dictionary
-*/
-// sourcekitd_request_dictionary_create
+    private func requestToUnmanaged(value: Request) -> sourcekitd_object_t {
+        switch value {
+        case let .Dictionary(dictionary):
+            let object = sourcekitd_request_dictionary_create(nil, nil, 0)
+            for (uid, value) in dictionary {
+                withUnmanagedRequest(value) {
+                    sourcekitd_request_dictionary_set_value(object, uid.value, $0)
+                }
+            }
+            return object
+        case let .Array(array):
+            let contents = array.map(requestToUnmanaged)
+            defer { contents.forEach(sourcekitd_request_release) }
+            return sourcekitd_request_array_create(contents, contents.count)
+        case let .Int(int):
+            return sourcekitd_request_int64_create(int)
+        case let .String(string):
+            return string.withCString(sourcekitd_request_string_create)
+        case let .UID(uid):
+            return sourcekitd_request_uid_create(uid.value)
+        }
+    }
 
-/**
-Set int64 value in dictionary
-*/
-// sourcekitd_request_dictionary_set_int64
+    func withUnmanagedRequest<Return>(value: Request, @noescape body: sourcekitd_object_t throws -> Return) rethrows -> Return {
+        let object = requestToUnmanaged(value)
+        defer { sourcekitd_request_release(object) }
+        return try body(object)
+    }
 
-/**
-Set string value in dictionary
-*/
-// sourcekitd_request_dictionary_set_string
+    func sendRequest(request: Request) throws -> SourceKittenFramework.Response {
+        return try withUnmanagedRequest(request) {
+            let response = sourcekitd_send_request_sync($0)
+            let obj = Response(response)
+            return try SourceKittenFramework.Response(obj)
+        }
+    }
 
-/**
-Set string value in dictionary from string buffer
-*/
-// sourcekitd_request_dictionary_set_stringbuf
+    @available(*, deprecated)
+    func sendRequest(request: Request) -> xpc_object_t? {
+        return withUnmanagedRequest(request) {
+            let response = sourcekitd_send_request_sync($0)
+            return unsafeBitCast(response, Optional<xpc_object_t>.self)
+        }
+    }
 
-/**
-Set uid value in dictionary
-*/
-// sourcekitd_request_dictionary_set_uid
+    // MARK: - Response API
 
-/**
-Set xpc_object_t value in dictionary
-*/
-// sourcekitd_request_dictionary_set_value
+    final class Response {
 
-/**
-Create int64 XPC value
-*/
-// sourcekitd_request_int64_create
+        private let value: sourcekitd_response_t
 
-/**
-Decrement the XPC request's retain count by one
-*/
-// sourcekitd_request_release
+        private init(_ value: sourcekitd_response_t) {
+            self.value = value
+        }
 
-/**
-Increment the XPC request's retain count by one
-*/
-// sourcekitd_request_retain
+        deinit {
+            sourcekitd_response_dispose(value)
+        }
 
-/**
-Create string XPC value
-*/
-// sourcekitd_request_string_create
+    }
 
-/**
-Create uid XPC value
-*/
-// sourcekitd_request_uid_create
+    struct Variant {
 
-/**
-Copy string description of XPC response
-Interesting...
-*/
-// sourcekitd_response_description_copy
+        private let value: sourcekitd_variant_t
+        private let owner: Response
 
-/**
-Print string description of XPC response to STDOUT
-*/
-@_silgen_name("sourcekitd_response_description_dump") internal func sourcekitd_response_description_dump(_: xpc_object_t?) -> Void
+        private init(_ value: sourcekitd_variant_t, within owner: Response) {
+            self.value = value
+            self.owner = owner
+        }
 
-/**
-Print string description of XPC response and its file description to STDOUT
-NOTE: This does not work, instead simply causing a fatal I/O error
-*/
-@_silgen_name("sourcekitd_response_description_dump_filedesc") internal func sourcekitd_response_description_dump_filedesc(_: xpc_object_t?) -> Void
+    }
 
-/**
-?? Perhaps forcibly deallocates the response ??
-*/
-// sourcekitd_response_dispose
+}
 
-/**
-Returns description of the error as c string
-Interesting...
-*/
-// sourcekitd_response_error_get_description
+extension UID: CustomStringConvertible, CustomDebugStringConvertible {
 
-/**
-?? Returns type of the error as... something... ??
-*/
-// sourcekitd_response_error_get_kind
+    private var stringValue: String {
+        return SourceKit.shared.describe(value, getBuffer: sourcekitd_uid_get_string_ptr, getLength: sourcekitd_uid_get_length)
+    }
 
-/**
-Returns xpc_object_t value of the response at the given key in the underlying XPC dictionary
-*/
-// sourcekitd_response_get_value
+    /// A textual representation of `self`.
+    public var description: String {
+        return stringValue
+    }
 
-/**
-Returns whether or not XPC response is an error
-NOTE: I've never seen this return true, despite SourceKit requests failing with an error message
-*/
-@_silgen_name("sourcekitd_response_is_error") internal func sourcekitd_response_is_error(_: xpc_object_t?) -> Bool
+    /// A textual representation of `self`, suitable for debugging.
+    public var debugDescription: String {
+        return stringValue.debugDescription
+    }
+    
+}
 
-/**
-Send an asynchronous request to SourceKit. Must set a response callback.
-*/
-// sourcekitd_send_request
+extension SourceKit.Request: CustomDebugStringConvertible {
 
-/**
-Send a synchronous request to SourceKit. Response is returned as an xpc_object_t. Typically an XPC dictionary.
-*/
-@_silgen_name("sourcekitd_send_request_sync") internal func sourcekitd_send_request_sync(_: xpc_object_t?) -> xpc_object_t?
+    init<Key: RawRepresentable where Key.RawValue == SourceKittenFramework.UID>(_ literal: DictionaryLiteral<Key, SourceKit.Request>) {
+        var dictionary = Swift.Dictionary<SourceKittenFramework.UID, SourceKit.Request>(minimumCapacity: literal.count)
+        for (key, value) in literal {
+            dictionary[key.rawValue] = value
+        }
+        self = .Dictionary(dictionary)
+    }
 
-/**
-?? Called if the XPC connection to SourceKit is lost ??
-*/
-@_silgen_name("sourcekitd_set_interrupted_connection_handler") internal func sourcekitd_set_interrupted_connection_handler(_: UnsafePointer<() -> ()>) -> Void
+    init<Sequence: SequenceType where Sequence.Generator.Element == SourceKit.Request>(_ sequence: Sequence) {
+        self = .Array(Swift.Array(sequence))
+    }
 
-/**
-?? Set the notification callback to be called when asynchronous requests return ??
-*/
-// sourcekitd_set_notification_handler
+    init<UID: RawRepresentable where UID.RawValue == SourceKittenFramework.UID>(_ value: UID) {
+        self = .UID(value.rawValue)
+    }
 
-/**
-Gracefully shut down the XPC connection to SourceKit (presumably)
-*/
-@_silgen_name("sourcekitd_shutdown") internal func sourcekitd_shutdown() -> Int
+    init(_ value: SourceKittenFramework.UID) {
+        self = .UID(value)
+    }
 
-/**
-Get uid from its c string representation.
-*/
-@_silgen_name("sourcekitd_uid_get_from_cstr") internal func sourcekitd_uid_get_from_cstr(_: UnsafePointer<CChar>) -> UInt64
+    init(_ string: Swift.String) {
+        self = .String(string)
+    }
 
-/**
-?? Get uid from a buffer somewhere, somehow ??
-*/
-// sourcekitd_uid_get_from_buf
+    init<Int: SignedIntegerType>(_ int: Int) {
+        self = .Int(numericCast(int))
+    }
 
-/**
-?? Get length of uid, presumably. But is this the length of the uint64_t the string. ??
-*/
-// sourcekitd_uid_get_length
+    var debugDescription: Swift.String {
+        return SourceKit.shared.withUnmanagedRequest(self) {
+            SourceKit.shared.describe($0, using: sourcekitd_request_description_copy)
+        }
+    }
 
-/**
-Get c string representation of a uid
-*/
-@_silgen_name("sourcekitd_uid_get_string_ptr") internal func sourcekitd_uid_get_string_ptr(_: UInt64) -> UnsafePointer<CChar>
+}
 
-/**
-?? WTF is a sourcekitd variant ??
-*/
+extension SourceKit.Response {
 
-// sourcekitd_variant_array_apply
-// sourcekitd_variant_array_apply_f
-// sourcekitd_variant_array_get_bool
-// sourcekitd_variant_array_get_count
-// sourcekitd_variant_array_get_int64
-// sourcekitd_variant_array_get_string
-// sourcekitd_variant_array_get_uid
-// sourcekitd_variant_array_get_value
-// sourcekitd_variant_bool_get_value
-// sourcekitd_variant_description_copy
-// sourcekitd_variant_description_dump
-// sourcekitd_variant_description_dump_filedesc
-// sourcekitd_variant_dictionary_apply
-// sourcekitd_variant_dictionary_apply_f
-// sourcekitd_variant_dictionary_get_bool
-// sourcekitd_variant_dictionary_get_int64
-// sourcekitd_variant_dictionary_get_string
-// sourcekitd_variant_dictionary_get_uid
-// sourcekitd_variant_dictionary_get_value
-// sourcekitd_variant_get_type
-// sourcekitd_variant_int64_get_value
-// sourcekitd_variant_string_get_length
-// sourcekitd_variant_string_get_ptr
-// sourcekitd_variant_uid_get_value
+    var isError: Bool {
+        return sourcekitd_response_is_error(value)
+    }
+
+    var errorValue: sourcekitd_error_t {
+        return sourcekitd_response_error_get_kind(value)
+    }
+
+    var errorDescription: String! {
+        assert(isError)
+        return SourceKit.shared.describe(value, takeOwnership: false) {
+            UnsafeMutablePointer(sourcekitd_response_error_get_description($0))
+        }
+    }
+
+    var variant: SourceKit.Variant {
+        return SourceKit.Variant(sourcekitd_response_get_value(value), within: self)
+    }
+
+    var valueDescription: String! {
+        assert(!isError)
+        return SourceKit.shared.describe(value, using: sourcekitd_response_description_copy)
+    }
+    
+}
+
+extension SourceKit.Variant: CustomStringConvertible, CustomDebugStringConvertible {
+
+    var description: String {
+        return SourceKit.shared.describe(value, using: sourcekitd_variant_description_copy)
+    }
+
+    var debugDescription: String {
+        return description.debugDescription
+    }
+
+    var kind: sourcekitd_variant_type_t {
+        return sourcekitd_variant_get_type(value)
+    }
+
+    subscript (key: UID) -> SourceKit.Variant? {
+        let newValue = sourcekitd_variant_dictionary_get_value(value, key.value)
+        guard sourcekitd_variant_get_type(newValue) != SOURCEKITD_VARIANT_TYPE_NULL else { return nil }
+        return SourceKit.Variant.init(newValue, within: owner)
+    }
+
+    var arrayStart: Int {
+        return 0
+    }
+
+    var arrayEnd: Int {
+        return sourcekitd_variant_array_get_count(value)
+    }
+
+    subscript (position: Swift.Int) -> SourceKit.Variant {
+        let newValue = sourcekitd_variant_array_get_value(value, position)
+        return SourceKit.Variant.init(newValue, within: owner)
+    }
+
+    var intValue: Int64 {
+        return sourcekitd_variant_int64_get_value(value)
+    }
+
+    var boolValue: Bool {
+        return sourcekitd_variant_bool_get_value(value)
+    }
+
+    var stringValue: String! {
+        return SourceKit.shared.describe(value, getBuffer: sourcekitd_variant_string_get_ptr, getLength: sourcekitd_variant_string_get_length)
+    }
+
+    var uidValue: UID {
+        return UID(sourcekitd_variant_uid_get_value(value))
+    }
+
+}
