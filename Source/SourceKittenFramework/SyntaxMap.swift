@@ -126,13 +126,6 @@ Returns true if `lhs` SyntaxMap is equal to `rhs` SyntaxMap.
 - returns: True if `lhs` SyntaxMap is equal to `rhs` SyntaxMap.
 */
 public func ==(lhs: SyntaxMap, rhs: SyntaxMap) -> Bool {
-    if lhs.tokens.count != rhs.tokens.count {
-        return false
-    }
-    for (index, value) in lhs.tokens.enumerate() {
-        if rhs.tokens[index] != value {
-            return false
-        }
-    }
-    return true
+    // TODO: replace with == once SwiftXPC is gone
+    return lhs.tokens.elementsEqual(rhs.tokens)
 }
