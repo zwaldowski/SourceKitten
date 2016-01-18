@@ -41,8 +41,6 @@ public enum Request {
     case EditorOpen(File)
     /// A `cursorinfo` request for an offset in the given file, using the `arguments` given.
     case CursorInfo(file: String, offset: Int64, arguments: [String])
-    /// A custom request by passing in the xpc_object_t directly.
-    case CustomRequest(xpc_object_t)
     /// A `codecomplete` request by passing in the file name, contents, offset
     /// for which to generate code completion options and array of compiler arguments.
     case CodeCompletionRequest(file: String, contents: String, offset: Int64, arguments: [String])
@@ -73,8 +71,6 @@ public enum Request {
                 "key.offset": offset,
                 "key.compilerargs": (arguments.map { $0 as XPCRepresentable } as XPCArray)
             ])
-        case .CustomRequest(let request):
-            return request
         case .CodeCompletionRequest(let file, let contents, let offset, let arguments):
             return toXPC([
                 "key.request": sourcekitd_uid_get_from_cstr("source.request.codecomplete"),
