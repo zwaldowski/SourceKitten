@@ -19,6 +19,7 @@ extension Dictionary: SourceKitRepresentable {}
 extension String: SourceKitRepresentable {}
 extension Int64: SourceKitRepresentable {}
 extension Bool: SourceKitRepresentable {}
+extension UID: SourceKitRepresentable {}
 
 extension SourceKitRepresentable {
     public func isEqualTo(rhs: SourceKitRepresentable) -> Bool {
@@ -46,6 +47,8 @@ extension SourceKitRepresentable {
             return lhs == rhs as? Int64
         case let lhs as Bool:
             return lhs == rhs as? Bool
+        case let lhs as UID:
+            return lhs == rhs as? UID
         default:
             fatalError("Should never happen because we've checked all SourceKitRepresentable types")
         }
