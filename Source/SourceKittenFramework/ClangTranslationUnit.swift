@@ -44,11 +44,15 @@ extension Dictionary {
 }
 
 /// Represents a group of CXTranslationUnits.
-public struct ClangTranslationUnit {
+public final class ClangTranslationUnit {
     /// Array of CXTranslationUnits.
     private let clangTranslationUnits: [CXTranslationUnit]
 
     public let declarations: [String: [SourceDeclaration]]
+
+    deinit {
+        clangTranslationUnits.forEach(clang_disposeTranslationUnit)
+    }
 
     /**
     Create a ClangTranslationUnit by passing Objective-C header files and clang compiler arguments.
@@ -76,7 +80,7 @@ public struct ClangTranslationUnit {
     - parameter xcodeBuildArguments: The arguments necessary pass in to `xcodebuild` to link these header files.
     - parameter path:                Path to run `xcodebuild` from. Uses current path by default.
     */
-    public init?(headerFiles: [String], xcodeBuildArguments: [String], inPath path: String = NSFileManager.defaultManager().currentDirectoryPath) {
+    public convenience init?(headerFiles: [String], xcodeBuildArguments: [String], inPath path: String = NSFileManager.defaultManager().currentDirectoryPath) {
         let xcodeBuildOutput = runXcodeBuild(xcodeBuildArguments + ["-dry-run"], inPath: path) ?? ""
         guard let clangArguments = parseCompilerArguments(xcodeBuildOutput, language: .ObjC, moduleName: nil) else {
             fputs("could not parse compiler arguments\n", stderr)
