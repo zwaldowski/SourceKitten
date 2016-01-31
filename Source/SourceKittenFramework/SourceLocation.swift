@@ -13,12 +13,12 @@ import Foundation
 
 public struct SourceLocation {
     let file: String
-    let line: UInt32
-    let column: UInt32
-    let offset: UInt32
+    let line: Int
+    let column: Int
+    let offset: Int
 
     public func rangeToEndLocation(end: SourceLocation) -> NSRange {
-        return NSRange(location: Int(offset), length: Int(end.offset - offset))
+        return NSRange(location: offset, length: end.offset - offset)
     }
 }
 
@@ -30,7 +30,7 @@ extension SourceLocation {
         var offset: UInt32 = 0
         clang_getSpellingLocation(clangLocation, &cxfile, &line, &column, &offset)
         self.init(file: clang_getFileName(cxfile).str() ?? "<none>",
-            line: line, column: column, offset: offset)
+            line: numericCast(line), column: numericCast(column), offset: numericCast(offset))
     }
 }
 
