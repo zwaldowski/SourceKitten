@@ -352,38 +352,11 @@
 		D0D1216E19E87B05005E4BAA /* SourceKittenFramework */ = {
 			isa = PBXGroup;
 			children = (
-				E86F588D1C4DC49000426E78 /* sourcekitd.h */,
-				E8D4742B1A648ED10011A49C /* clang-c */,
+				DB00D4811C5EC444004F82C0 /* Clang */,
+				DB00D4841C5EC464004F82C0 /* Common */,
+				DB00D4821C5EC447004F82C0 /* Swift */,
+				DB00D4831C5EC451004F82C0 /* Utilities */,
 				D0D1216F19E87B05005E4BAA /* Supporting Files */,
-				E87212191AD2FFCD00A484F4 /* Array+SourceKitten.swift */,
-				3F0CBB401BAAFF160015BBA8 /* Clang+SourceKitten.swift */,
-				E8D4743A1A648F290011A49C /* ClangTranslationUnit.swift */,
-				E8EE34BE1B9A502F00947605 /* CodeCompletionItem.swift */,
-				E852418E1A5F4FB3007099FB /* Dictionary+Merge.swift */,
-				E806D2921BE058D600D1BE41 /* Documentation.swift */,
-				E84763691A5A0651000EAE22 /* File.swift */,
-				3F56EACF1BAB251C006433D0 /* JSONOutput.swift */,
-				E8A18A3A1A58971D000362B7 /* Language.swift */,
-				E8241CA41A5E01A10047687E /* Module.swift */,
-				E877D9261B5693E70095BB2B /* ObjCDeclarationKind.swift */,
-				E83748C21A5BCD7900862B1B /* OffsetMap.swift */,
-				E806D2901BE058C400D1BE41 /* Parameter.swift */,
-				E86847391A587B4D0043DC65 /* Request.swift */,
-				E8A9B8911B56D1B100CD17D4 /* SourceDeclaration.swift */,
-				D0D1217119E87B05005E4BAA /* SourceKittenFramework.h */,
-				E806D28C1BE0589B00D1BE41 /* SourceLocation.swift */,
-				E8AE53C61A5B5FCA0092D24A /* String+SourceKitten.swift */,
-				E834740E1A593B5B00532B9A /* Structure.swift */,
-				E89291A81A5B800300D91568 /* SwiftDeclarationKind.swift */,
-				E89291A61A5B7FF800D91568 /* SwiftDocKey.swift */,
-				E8A18A3E1A592246000362B7 /* SwiftDocs.swift */,
-				2ED279151C61E2A100084460 /* StatementKind.swift */,
-				E80F23681A5CB01A00FD2352 /* SyntaxKind.swift */,
-				E8CC8A2C1A587FD300D1FEC7 /* SyntaxMap.swift */,
-				E80F236A1A5CB04100FD2352 /* SyntaxToken.swift */,
-				E806D28E1BE058B100D1BE41 /* Text.swift */,
-				DB00D47E1C5EBC4F004F82C0 /* UID.swift */,
-				E8A9B88F1B56CB5500CD17D4 /* Xcode.swift */,
 			);
 			name = SourceKittenFramework;
 			path = Source/SourceKittenFramework;
@@ -392,6 +365,7 @@
 		D0D1216F19E87B05005E4BAA /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				D0D1217119E87B05005E4BAA /* SourceKittenFramework.h */,
 				E8C0DFCC1AD349DB007EE3D4 /* SWXMLHash.framework */,
 			);
 			name = "Supporting Files";
@@ -424,6 +398,64 @@
 				D0D1217D19E87B05005E4BAA /* Info.plist */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		DB00D4811C5EC444004F82C0 /* Clang */ = {
+			isa = PBXGroup;
+			children = (
+				E8D4742B1A648ED10011A49C /* clang-c */,
+				3F0CBB401BAAFF160015BBA8 /* Clang+SourceKitten.swift */,
+				E8D4743A1A648F290011A49C /* ClangTranslationUnit.swift */,
+				E806D2921BE058D600D1BE41 /* Documentation.swift */,
+				E877D9261B5693E70095BB2B /* ObjCDeclarationKind.swift */,
+				E806D2901BE058C400D1BE41 /* Parameter.swift */,
+				E8A9B8911B56D1B100CD17D4 /* SourceDeclaration.swift */,
+				E806D28C1BE0589B00D1BE41 /* SourceLocation.swift */,
+				E806D28E1BE058B100D1BE41 /* Text.swift */,
+			);
+			name = Clang;
+			sourceTree = "<group>";
+		};
+		DB00D4821C5EC447004F82C0 /* Swift */ = {
+			isa = PBXGroup;
+			children = (
+				E86F588D1C4DC49000426E78 /* sourcekitd.h */,
+				E8EE34BE1B9A502F00947605 /* CodeCompletionItem.swift */,
+				E84763691A5A0651000EAE22 /* File.swift */,
+				E8241CA41A5E01A10047687E /* Module.swift */,
+				E83748C21A5BCD7900862B1B /* OffsetMap.swift */,
+				E86847391A587B4D0043DC65 /* Request.swift */,
+				2ED279151C61E2A100084460 /* StatementKind.swift */,
+				E834740E1A593B5B00532B9A /* Structure.swift */,
+				E89291A81A5B800300D91568 /* SwiftDeclarationKind.swift */,
+				E89291A61A5B7FF800D91568 /* SwiftDocKey.swift */,
+				E8A18A3E1A592246000362B7 /* SwiftDocs.swift */,
+				E80F23681A5CB01A00FD2352 /* SyntaxKind.swift */,
+				E8CC8A2C1A587FD300D1FEC7 /* SyntaxMap.swift */,
+				E80F236A1A5CB04100FD2352 /* SyntaxToken.swift */,
+				DB00D47E1C5EBC4F004F82C0 /* UID.swift */,
+			);
+			name = Swift;
+			sourceTree = "<group>";
+		};
+		DB00D4831C5EC451004F82C0 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				E8AE53C61A5B5FCA0092D24A /* String+SourceKitten.swift */,
+				E87212191AD2FFCD00A484F4 /* Array+SourceKitten.swift */,
+				E852418E1A5F4FB3007099FB /* Dictionary+Merge.swift */,
+			);
+			name = Utilities;
+			sourceTree = "<group>";
+		};
+		DB00D4841C5EC464004F82C0 /* Common */ = {
+			isa = PBXGroup;
+			children = (
+				3F56EACF1BAB251C006433D0 /* JSONOutput.swift */,
+				E8A18A3A1A58971D000362B7 /* Language.swift */,
+				E8A9B88F1B56CB5500CD17D4 /* Xcode.swift */,
+			);
+			name = Common;
 			sourceTree = "<group>";
 		};
 		E8D4742B1A648ED10011A49C /* clang-c */ = {
@@ -539,7 +571,7 @@
 					};
 				};
 			};
-			buildConfigurationList = D0D1211319E87861005E4BAA /* Build configuration list for PBXProject "sourcekitten" */;
+			buildConfigurationList = D0D1211319E87861005E4BAA /* Build configuration list for PBXProject "SourceKitten" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -988,7 +1020,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		D0D1211319E87861005E4BAA /* Build configuration list for PBXProject "sourcekitten" */ = {
+		D0D1211319E87861005E4BAA /* Build configuration list for PBXProject "SourceKitten" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				D0D1211D19E87861005E4BAA /* Debug */,
