@@ -21,6 +21,7 @@
 		D0E7B65319E9C6AD00EDBA4D /* SourceKittenFramework.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0D1216D19E87B05005E4BAA /* SourceKittenFramework.framework */; };
 		D0E7B65619E9C76900EDBA4D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D1211B19E87861005E4BAA /* main.swift */; };
 		DB00D4801C5EBCA2004F82C0 /* UID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D47E1C5EBC4F004F82C0 /* UID.swift */; };
+		DB6E77731C717CDC00BAB218 /* Serializable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6E77721C717CDC00BAB218 /* Serializable.swift */; };
 		E805A0481B55CBAF00EA654A /* SourceKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E805A0471B55CBAF00EA654A /* SourceKitTests.swift */; };
 		E805A04A1B560FCA00EA654A /* FileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E805A0491B560FCA00EA654A /* FileTests.swift */; };
 		E806D28D1BE0589B00D1BE41 /* SourceLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = E806D28C1BE0589B00D1BE41 /* SourceLocation.swift */; };
@@ -153,6 +154,7 @@
 		D0DB09A319EA354200234B16 /* SyntaxTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SyntaxTests.swift; sourceTree = "<group>"; usesTabs = 0; };
 		D0E7B63219E9C64500EDBA4D /* sourcekitten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sourcekitten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB00D47E1C5EBC4F004F82C0 /* UID.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UID.swift; sourceTree = "<group>"; };
+		DB6E77721C717CDC00BAB218 /* Serializable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Serializable.swift; sourceTree = "<group>"; };
 		E805A0471B55CBAF00EA654A /* SourceKitTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceKitTests.swift; sourceTree = "<group>"; };
 		E805A0491B560FCA00EA654A /* FileTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileTests.swift; sourceTree = "<group>"; };
 		E80604B21A5D452C0016D959 /* StructureCommand.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StructureCommand.swift; sourceTree = "<group>"; };
@@ -454,6 +456,7 @@
 				3F56EACF1BAB251C006433D0 /* JSONOutput.swift */,
 				E8A18A3A1A58971D000362B7 /* Language.swift */,
 				E8A9B88F1B56CB5500CD17D4 /* Xcode.swift */,
+				DB6E77721C717CDC00BAB218 /* Serializable.swift */,
 			);
 			name = Common;
 			sourceTree = "<group>";
@@ -633,6 +636,7 @@
 				E872121A1AD2FFCD00A484F4 /* Array+SourceKitten.swift in Sources */,
 				3F0CBB411BAAFF160015BBA8 /* Clang+SourceKitten.swift in Sources */,
 				2E8FF7101C6268C100F280F0 /* StatementKind.swift in Sources */,
+				DB6E77731C717CDC00BAB218 /* Serializable.swift in Sources */,
 				E8D4743B1A648F290011A49C /* ClangTranslationUnit.swift in Sources */,
 				E8EE34BF1B9A502F00947605 /* CodeCompletionItem.swift in Sources */,
 				E852418F1A5F4FB3007099FB /* Dictionary+Merge.swift in Sources */,

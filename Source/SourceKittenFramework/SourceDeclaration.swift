@@ -134,3 +134,46 @@ extension SourceDeclaration: Comparable {}
 public func <(lhs: SourceDeclaration, rhs: SourceDeclaration) -> Bool {
     return lhs.location < rhs.location
 }
+
+// MARK: Serializable
+
+extension SourceDeclaration: Serializable {
+
+    func toOutput() -> Output {
+        var dict = [String: AnyObject]()
+
+        func set(key: SwiftDocKey, _ value: AnyObject?) {
+            if let value = value {
+                dict[key.rawValue] = value
+            }
+        }
+
+        func setA(key: SwiftDocKey, _ value: Output?) {
+            guard case let .Array(array)? = value where !array.isEmpty else { return }
+            dict[key.rawValue] = array
+        }
+
+        set(.Kind, type.rawValue)
+        set(.FilePath, location.file)
+        set(.DocFile, location.file)
+        set(.DocLine, Int(location.line))
+        set(.DocColumn, Int(location.column))
+        set(.Name, name)
+        set(.USR, usr)
+        set(.ParsedDeclaration, declaration)
+        set(.DocumentationComment, commentBody)
+        set(.ParsedScopeStart, Int(extent.start.line))
+        set(.ParsedScopeEnd, Int(extent.end.line))
+
+        setA(.DocResultDiscussion, documentation?.returnDiscussion.toOutput())
+        setA(.DocParameters, documentation?.parameters.toOutput())
+        setA(.Substructure, children.toOutput())
+
+        if commentBody != nil {
+            set(.FullXMLDocs, "")
+        }
+
+        return .Object(dict)
+    }
+
+}

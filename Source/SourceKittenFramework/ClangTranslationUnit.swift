@@ -91,11 +91,27 @@ public final class ClangTranslationUnit {
     }
 }
 
+// MARK: Serializable
+
+extension ClangTranslationUnit: Serializable {
+
+    func toOutput() -> Output {
+        let dicts = declarations.map {
+            [ $0: [
+                "key.substructure": $1.toObject(),
+                "key.diagnostic_stage": ""
+                ] ]
+        }
+        return .Array(dicts.sort({ $0.keys.first < $1.keys.first }))
+    }
+    
+}
+
 // MARK: CustomStringConvertible
 
 extension ClangTranslationUnit: CustomStringConvertible {
     /// A textual JSON representation of `ClangTranslationUnit`.
     public var description: String {
-        return declarationsToJSON(declarations)
+        return toJSON()
     }
 }
