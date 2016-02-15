@@ -22,7 +22,10 @@
 		D0E7B65619E9C76900EDBA4D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D1211B19E87861005E4BAA /* main.swift */; };
 		DB00D4801C5EBCA2004F82C0 /* UID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D47E1C5EBC4F004F82C0 /* UID.swift */; };
 		DB00D4861C5EC634004F82C0 /* SourceDeclarationNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4851C5EC634004F82C0 /* SourceDeclarationNew.swift */; };
+		DB00D4961C5F046B004F82C0 /* SwiftLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4951C5F046B004F82C0 /* SwiftLocation.swift */; };
+		DB00D4981C5F050D004F82C0 /* SwiftDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4971C5F050D004F82C0 /* SwiftDeclaration.swift */; };
 		DB00D49A1C5F0630004F82C0 /* SourceLocationNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4991C5F0630004F82C0 /* SourceLocationNew.swift */; };
+		DB4BC8FA1C784546007E33ED /* SwiftCursorDocumentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4BC8F91C784546007E33ED /* SwiftCursorDocumentation.swift */; };
 		DB6E77731C717CDC00BAB218 /* Serializable.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB6E77721C717CDC00BAB218 /* Serializable.swift */; };
 		E805A0481B55CBAF00EA654A /* SourceKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E805A0471B55CBAF00EA654A /* SourceKitTests.swift */; };
 		E805A04A1B560FCA00EA654A /* FileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E805A0491B560FCA00EA654A /* FileTests.swift */; };
@@ -157,7 +160,10 @@
 		D0E7B63219E9C64500EDBA4D /* sourcekitten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sourcekitten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB00D47E1C5EBC4F004F82C0 /* UID.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UID.swift; sourceTree = "<group>"; };
 		DB00D4851C5EC634004F82C0 /* SourceDeclarationNew.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceDeclarationNew.swift; sourceTree = "<group>"; };
+		DB00D4951C5F046B004F82C0 /* SwiftLocation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftLocation.swift; sourceTree = "<group>"; };
+		DB00D4971C5F050D004F82C0 /* SwiftDeclaration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftDeclaration.swift; sourceTree = "<group>"; };
 		DB00D4991C5F0630004F82C0 /* SourceLocationNew.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceLocationNew.swift; sourceTree = "<group>"; };
+		DB4BC8F91C784546007E33ED /* SwiftCursorDocumentation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftCursorDocumentation.swift; sourceTree = "<group>"; };
 		DB6E77721C717CDC00BAB218 /* Serializable.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Serializable.swift; sourceTree = "<group>"; };
 		E805A0471B55CBAF00EA654A /* SourceKitTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceKitTests.swift; sourceTree = "<group>"; };
 		E805A0491B560FCA00EA654A /* FileTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FileTests.swift; sourceTree = "<group>"; };
@@ -433,9 +439,12 @@
 				E86847391A587B4D0043DC65 /* Request.swift */,
 				2ED279151C61E2A100084460 /* StatementKind.swift */,
 				E834740E1A593B5B00532B9A /* Structure.swift */,
+				DB4BC8F91C784546007E33ED /* SwiftCursorDocumentation.swift */,
+				DB00D4971C5F050D004F82C0 /* SwiftDeclaration.swift */,
 				E89291A81A5B800300D91568 /* SwiftDeclarationKind.swift */,
 				E89291A61A5B7FF800D91568 /* SwiftDocKey.swift */,
 				E8A18A3E1A592246000362B7 /* SwiftDocs.swift */,
+				DB00D4951C5F046B004F82C0 /* SwiftLocation.swift */,
 				E80F23681A5CB01A00FD2352 /* SyntaxKind.swift */,
 				E8CC8A2C1A587FD300D1FEC7 /* SyntaxMap.swift */,
 				E80F236A1A5CB04100FD2352 /* SyntaxToken.swift */,
@@ -638,6 +647,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DB4BC8FA1C784546007E33ED /* SwiftCursorDocumentation.swift in Sources */,
 				E806D2931BE058D600D1BE41 /* Documentation.swift in Sources */,
 				E872121A1AD2FFCD00A484F4 /* Array+SourceKitten.swift in Sources */,
 				3F0CBB411BAAFF160015BBA8 /* Clang+SourceKitten.swift in Sources */,
@@ -660,12 +670,14 @@
 				E8A9B8921B56D1B100CD17D4 /* SourceDeclaration.swift in Sources */,
 				E806D28D1BE0589B00D1BE41 /* SourceLocation.swift in Sources */,
 				E8AE53C71A5B5FCA0092D24A /* String+SourceKitten.swift in Sources */,
+				DB00D4981C5F050D004F82C0 /* SwiftDeclaration.swift in Sources */,
 				E834740F1A593B5B00532B9A /* Structure.swift in Sources */,
 				E89291A91A5B800300D91568 /* SwiftDeclarationKind.swift in Sources */,
 				E89291A71A5B7FF800D91568 /* SwiftDocKey.swift in Sources */,
 				E8A18A3F1A592246000362B7 /* SwiftDocs.swift in Sources */,
 				E80F23691A5CB01A00FD2352 /* SyntaxKind.swift in Sources */,
 				E8CC8A2D1A587FD300D1FEC7 /* SyntaxMap.swift in Sources */,
+				DB00D4961C5F046B004F82C0 /* SwiftLocation.swift in Sources */,
 				E80F236B1A5CB04100FD2352 /* SyntaxToken.swift in Sources */,
 				DB00D4861C5EC634004F82C0 /* SourceDeclarationNew.swift in Sources */,
 				E8A9B8901B56CB5500CD17D4 /* Xcode.swift in Sources */,

@@ -82,3 +82,5 @@ public enum SwiftDeclarationKind: String {
     /// `var.static`.
     case VarStatic = "source.lang.swift.decl.var.static"
 }
+
+extension SwiftDeclarationKind: DeclarationKind {}

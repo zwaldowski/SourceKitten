@@ -42,6 +42,8 @@ internal enum SwiftDocKey: String {
     case SyntaxMap            = "key.syntaxmap"
     /// Type name (String).
     case TypeName             = "key.typename"
+    /// Access control constant (String).
+    case Accessibility        = "key.accessibility"
 
     // MARK: Custom Keys
 
