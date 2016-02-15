@@ -10,6 +10,24 @@
 
 ##### Bug Fixes
 
+* None.
+
+## 0.10.0
+
+##### Breaking
+
+* Change `SwiftDocs.init(file:arguments:)` to
+  `SwiftDocs.init?(file:arguments:)`.  
+  [Norio Nomura](https://github.com/norio-nomura)
+
+##### Enhancements
+
+* Add `Request.failableSend()` that can handle SourceKitService crashes.
+  `sourcekitten doc` does not stop when SourceKitService crashes.  
+  [Norio Nomura](https://github.com/norio-nomura)
+
+##### Bug Fixes
+
 * Fix crash when offset points end of string.  
   [Norio Nomura](https://github.com/norio-nomura)
   [#164](https://github.com/realm/SwiftLint/issues/164)

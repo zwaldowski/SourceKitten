@@ -22,16 +22,7 @@ OUTPUT_PACKAGE=SourceKitten.pkg
 VERSION_STRING=$(shell agvtool what-marketing-version -terse1)
 COMPONENTS_PLIST=Source/sourcekitten/Components.plist
 
-SWIFT_TOOLCHAIN=/Library/Developer/Toolchains/$(SWIFT_SNAPSHOT).xctoolchain
-SPM=$(SWIFT_TOOLCHAIN)/usr/bin/swift build
-SPM_INCLUDE=$(SWIFT_TOOLCHAIN)/usr/local/include
-SPM_LIB=$(SWIFT_TOOLCHAIN)/usr/lib
-# for including "clang-c"
-SPMFLAGS=-Xcc -ISource/Clang_C -Xcc -I$(SPM_INCLUDE)
-# for linking sourcekitd and clang-c
-SPMFLAGS+= -Xcc -F$(SPM_LIB) -Xlinker -F$(SPM_LIB) -Xlinker -L$(SPM_LIB)
-# for loading sourcekitd and clang-c
-SPMFLAGS+= -Xlinker -rpath -Xlinker $(SPM_LIB)
+SWIFT_BUILD_COMMAND=/Library/Developer/Toolchains/$(SWIFT_SNAPSHOT).xctoolchain/usr/bin/swift build
 
 .PHONY: all bootstrap clean install package test uninstall
 
@@ -88,19 +79,23 @@ swift_snapshot_install:
 	curl https://swift.org/builds/development/xcode/$(SWIFT_SNAPSHOT)/$(SWIFT_SNAPSHOT)-osx.pkg -o swift.pkg
 	sudo installer -pkg swift.pkg -target /
 
+spm_bootstrap: spm_teardown
+	script/spm_bootstrap "$(SWIFT_SNAPSHOT)"
+
+spm_teardown:
+	script/spm_teardown
+
 spm:
-	sed -i "" "s/swift-latest/$(SWIFT_SNAPSHOT)/" Source/Clang_C/module.modulemap
-	$(SPM) $(SPMFLAGS)
-	sed -i "" "s/$(SWIFT_SNAPSHOT)/swift-latest/" Source/Clang_C/module.modulemap
+	$(SWIFT_BUILD_COMMAND)
 
 spm_test: spm
 	.build/Debug/SourceKittenFrameworkTests
 
 spm_clean:
-	$(SPM) --clean
+	$(SWIFT_BUILD_COMMAND) --clean
 
 spm_clean_dist:
-	$(SPM) --clean=dist
+	$(SWIFT_BUILD_COMMAND) --clean=dist
 
 with_toolchain: bootstrap
 	export PATH="${SWIFT_TOOLCHAIN}/usr/bin":"${PATH}"

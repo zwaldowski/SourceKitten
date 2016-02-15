@@ -9,7 +9,7 @@
 import Foundation
 import SWXMLHash
 #if SWIFT_PACKAGE
-import sourcekitd
+import SourceKit
 #endif
 
 /// Represents a source file.
@@ -169,8 +169,8 @@ public final class File {
         var dictionary = dictionary
         let offsetMap = generateOffsetMap(documentedTokenOffsets, dictionary: dictionary)
         for offset in offsetMap.keys.reverse() { // Do this in reverse to insert the doc at the correct offset
-            let response = processDictionary(Request.sendCursorInfoRequest(cursorInfoRequest, atOffset: Int64(offset))!, cursorInfoRequest: nil, syntaxMap: syntaxMap)
-            if let kind = SwiftDocKey.getKind(response),
+            if let response = Request.sendCursorInfoRequest(cursorInfoRequest, atOffset: Int64(offset)).map({ processDictionary($0, cursorInfoRequest: nil, syntaxMap: syntaxMap) }),
+                kind = SwiftDocKey.getKind(response),
                 _ = SwiftDeclarationKind(rawValue: kind),
                 parentOffset = offsetMap[offset].flatMap({ Int64($0) }),
                 inserted = insertDoc(response, parent: dictionary, offset: parentOffset) {
