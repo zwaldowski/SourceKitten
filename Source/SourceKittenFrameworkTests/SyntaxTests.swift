@@ -10,17 +10,17 @@ import Foundation
 import SourceKittenFramework
 import XCTest
 
-func compareSyntax(file: File, _ expectedTokens: [(SyntaxKind, Int, Int)]) {
+func compareSyntax(sourceFile: File, _ expectedTokens: [(SyntaxKind, Int, Int)], file: String = __FILE__, line: UInt = __LINE__) {
     let expectedSyntaxMap = SyntaxMap(tokens: expectedTokens.map { tokenTuple in
         return SyntaxToken(type: tokenTuple.0.rawValue, offset: tokenTuple.1, length: tokenTuple.2)
     })
-    let syntaxMap = SyntaxMap(file: file)
-    XCTAssertEqual(syntaxMap, expectedSyntaxMap, "should generate expected syntax map")
+    let syntaxMap = SyntaxMap(file: sourceFile)
+    XCTAssertEqual(syntaxMap, expectedSyntaxMap, "should generate expected syntax map", file: file, line: line)
 
     let syntaxJSON = syntaxMap.description
     let jsonArray = try! NSJSONSerialization.JSONObjectWithData(syntaxJSON.dataUsingEncoding(NSUTF8StringEncoding)!, options: []) as? NSArray
-    XCTAssertNotNil(jsonArray, "JSON should be propery parsed")
-    XCTAssertEqual(jsonArray!, expectedSyntaxMap.tokens.map { $0.dictionaryValue }, "JSON should match expected syntax")
+    XCTAssertNotNil(jsonArray, "JSON should be propery parsed", file: file, line: line)
+    XCTAssertEqual(jsonArray!, expectedSyntaxMap.tokens.map { $0.dictionaryValue }, "JSON should match expected syntax", file: file, line: line)
 }
 
 class SyntaxTests: XCTestCase {

@@ -10,7 +10,7 @@ import Foundation
 import SourceKittenFramework
 import XCTest
 
-func compareJSONStringWithFixturesName(name: String, jsonString: String) {
+func compareJSONStringWithFixturesName(name: String, jsonString: String, file: String = __FILE__, line: UInt = __LINE__) {
     func jsonValue(jsonString: String) -> AnyObject {
         let data = jsonString.dataUsingEncoding(NSUTF8StringEncoding)!
         let result = try! NSJSONSerialization.JSONObjectWithData(data, options: [])
@@ -20,15 +20,15 @@ func compareJSONStringWithFixturesName(name: String, jsonString: String) {
     let secondValue = jsonValue(File(path: fixturesDirectory + name + ".json")!.contents)
     let message = "output should match expected fixture"
     if let firstValue = firstValue as? NSDictionary, secondValue = secondValue as? NSDictionary {
-        XCTAssertEqual(firstValue, secondValue, message)
+        XCTAssertEqual(firstValue, secondValue, message, file: file, line: line)
     } else if let firstValue = firstValue as? NSArray, secondValue = secondValue as? NSArray {
-        XCTAssertEqual(firstValue, secondValue, message)
+        XCTAssertEqual(firstValue, secondValue, message, file: file, line: line)
     } else {
-        XCTFail("output didn't match fixture type")
+        XCTFail("output didn't match fixture type", file: file, line: line)
     }
 }
 
-func compareDocsWithFixturesName(name: String) {
+func compareDocsWithFixturesName(name: String, file: String = __FILE__, line: UInt = __LINE__) {
     let swiftFilePath = fixturesDirectory + name + ".swift"
     let docs = SwiftDocs(file: File(path: swiftFilePath)!, arguments: ["-j4", swiftFilePath])!
 
