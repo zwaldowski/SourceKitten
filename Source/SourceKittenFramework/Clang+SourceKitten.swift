@@ -84,8 +84,8 @@ extension CXCursor {
         return contents.substringWithSourceRange(cursorExtent.start, end: cursorExtent.end)
     }
 
-    func name() -> String {
-        let spelling = clang_getCursorSpelling(self).str()!
+    func name() -> String? {
+        guard let spelling = clang_getCursorSpelling(self).str() else { return nil }
         let type = objCKind()
         if let usrString = usr() where spelling.isEmpty && type == .Enum {
             // libClang considers enums declared like `typedef enum {} name;` rather than `NS_ENUM()`

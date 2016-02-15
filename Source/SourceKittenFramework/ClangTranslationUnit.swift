@@ -91,6 +91,17 @@ public final class ClangTranslationUnit {
     }
 }
 
+// MARK: Equatable
+
+public func ==(lhs: ClangTranslationUnit, rhs: ClangTranslationUnit) -> Bool {
+    if lhs === rhs { return true }
+    return lhs.clangTranslationUnits.elementsEqual(rhs.clangTranslationUnits) {
+        clang_equalCursors($0.cursor(), $1.cursor()) != 0
+    }
+}
+
+extension ClangTranslationUnit: Equatable {}
+
 // MARK: Serializable
 
 extension ClangTranslationUnit: Serializable {

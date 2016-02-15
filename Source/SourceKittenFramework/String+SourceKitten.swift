@@ -525,7 +525,7 @@ extension String {
 
     /// Returns a copy of the string by trimming whitespace and the opening curly brace (`{`).
     internal func stringByTrimmingWhitespaceAndOpeningCurlyBrace() -> String? {
-        let unwantedSet = whitespaceAndNewlineCharacterSet.mutableCopy() as! NSMutableCharacterSet
+        let unwantedSet = NSMutableCharacterSet.whitespaceAndNewlineCharacterSet()
         unwantedSet.addCharactersInString("{")
         return stringByTrimmingCharactersInSet(unwantedSet)
     }

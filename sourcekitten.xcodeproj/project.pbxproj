@@ -22,8 +22,10 @@
 		D0E7B65619E9C76900EDBA4D /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0D1211B19E87861005E4BAA /* main.swift */; };
 		DB00D4801C5EBCA2004F82C0 /* UID.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D47E1C5EBC4F004F82C0 /* UID.swift */; };
 		DB00D4861C5EC634004F82C0 /* SourceDeclarationNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4851C5EC634004F82C0 /* SourceDeclarationNew.swift */; };
+		DB00D4881C5EE212004F82C0 /* ObjCDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4871C5EE212004F82C0 /* ObjCDeclaration.swift */; };
 		DB00D48A1C5EE254004F82C0 /* NSRange+SourceKitten.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4891C5EE254004F82C0 /* NSRange+SourceKitten.swift */; };
 		DB00D48C1C5EE265004F82C0 /* NSRegularExpression+SourceKitten.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D48B1C5EE265004F82C0 /* NSRegularExpression+SourceKitten.swift */; };
+		DB00D4901C5EE388004F82C0 /* ObjCLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D48F1C5EE388004F82C0 /* ObjCLocation.swift */; };
 		DB00D4961C5F046B004F82C0 /* SwiftLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4951C5F046B004F82C0 /* SwiftLocation.swift */; };
 		DB00D4981C5F050D004F82C0 /* SwiftDeclaration.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4971C5F050D004F82C0 /* SwiftDeclaration.swift */; };
 		DB00D49A1C5F0630004F82C0 /* SourceLocationNew.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB00D4991C5F0630004F82C0 /* SourceLocationNew.swift */; };
@@ -163,8 +165,10 @@
 		D0E7B63219E9C64500EDBA4D /* sourcekitten.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = sourcekitten.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DB00D47E1C5EBC4F004F82C0 /* UID.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UID.swift; sourceTree = "<group>"; };
 		DB00D4851C5EC634004F82C0 /* SourceDeclarationNew.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceDeclarationNew.swift; sourceTree = "<group>"; };
+		DB00D4871C5EE212004F82C0 /* ObjCDeclaration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjCDeclaration.swift; sourceTree = "<group>"; };
 		DB00D4891C5EE254004F82C0 /* NSRange+SourceKitten.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSRange+SourceKitten.swift"; sourceTree = "<group>"; };
 		DB00D48B1C5EE265004F82C0 /* NSRegularExpression+SourceKitten.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "NSRegularExpression+SourceKitten.swift"; sourceTree = "<group>"; };
+		DB00D48F1C5EE388004F82C0 /* ObjCLocation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ObjCLocation.swift; sourceTree = "<group>"; };
 		DB00D4951C5F046B004F82C0 /* SwiftLocation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftLocation.swift; sourceTree = "<group>"; };
 		DB00D4971C5F050D004F82C0 /* SwiftDeclaration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SwiftDeclaration.swift; sourceTree = "<group>"; };
 		DB00D4991C5F0630004F82C0 /* SourceLocationNew.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SourceLocationNew.swift; sourceTree = "<group>"; };
@@ -430,6 +434,8 @@
 				E8A9B8911B56D1B100CD17D4 /* SourceDeclaration.swift */,
 				E806D28C1BE0589B00D1BE41 /* SourceLocation.swift */,
 				E806D28E1BE058B100D1BE41 /* Text.swift */,
+				DB00D4871C5EE212004F82C0 /* ObjCDeclaration.swift */,
+				DB00D48F1C5EE388004F82C0 /* ObjCLocation.swift */,
 			);
 			name = Clang;
 			sourceTree = "<group>";
@@ -673,6 +679,8 @@
 				E806D28F1BE058B100D1BE41 /* Text.swift in Sources */,
 				E8241CA51A5E01A10047687E /* Module.swift in Sources */,
 				DB00D49A1C5F0630004F82C0 /* SourceLocationNew.swift in Sources */,
+				DB00D4901C5EE388004F82C0 /* ObjCLocation.swift in Sources */,
+				DB00D4881C5EE212004F82C0 /* ObjCDeclaration.swift in Sources */,
 				DB00D4801C5EBCA2004F82C0 /* UID.swift in Sources */,
 				E877D9271B5693E70095BB2B /* ObjCDeclarationKind.swift in Sources */,
 				E83748C31A5BCD7900862B1B /* OffsetMap.swift in Sources */,
