@@ -431,9 +431,10 @@ extension String {
     */
     public func isTokenDocumentable(token: SyntaxToken) -> Bool {
         if token.type == SyntaxKind.Keyword.rawValue {
-            let keywordFunctions = ["subscript", "init", "deinit"]
-            return ((self as NSString).substringWithByteRange(start: token.offset, length: token.length))
-                .map(keywordFunctions.contains) ?? false
+            let keywordFunctions = ["subscript", "init", "deinit"] as Set
+            return rangeForUTF8(token.offset ..< token.offset + token.length).map {
+                keywordFunctions.contains(self[$0])
+            } ?? false
         }
         return token.type == SyntaxKind.Identifier.rawValue
     }
@@ -459,76 +460,55 @@ extension String {
         }
     }
 
+    private static let CommentMultiLineRegex = try! NSRegularExpression(pattern: "^\\s*\\/\\*\\*\\s*(.*?)\\*\\/", options: [.AnchorsMatchLines, .DotMatchesLineSeparators])
+    private static let CommentSingleLineRegex = try! NSRegularExpression(pattern: "^\\s*\\/\\/\\/(.+)?", options: .AnchorsMatchLines)
+
     /**
     Returns the body of the comment if the string is a comment.
 
     - parameter range: Range to restrict the search for a comment body.
     */
-    public func commentBody(range: NSRange? = nil) -> String? {
-        let nsString = self as NSString
-        let patterns: [(pattern: String, options: NSRegularExpressionOptions)] = [
-            ("^\\s*\\/\\*\\*\\s*(.*?)\\*\\/", [.AnchorsMatchLines, .DotMatchesLineSeparators]), // multi: ^\s*\/\*\*\s*(.*?)\*\/
-            ("^\\s*\\/\\/\\/(.+)?",           .AnchorsMatchLines)                               // single: ^\s*\/\/\/(.+)?
-        ]
-        let range = range ?? NSRange(location: 0, length: nsString.length)
-        for pattern in patterns {
-            let regex = try! NSRegularExpression(pattern: pattern.pattern, options: pattern.options) // Safe to force try
-            let matches = regex.matchesInString(self, options: [], range: range)
-            let bodyParts = matches.flatMap { match -> [String] in
-                let numberOfRanges = match.numberOfRanges
-                if numberOfRanges < 1 {
-                    return []
-                }
-                return (1..<numberOfRanges).map { rangeIndex in
-                    let range = match.rangeAtIndex(rangeIndex)
-                    if range.location == NSNotFound {
-                        return "" // empty capture group, return empty string
-                    }
-                    var lineStart = 0
-                    var lineEnd = nsString.length
-                    let indexRange = NSRange(location: range.location, length: 0)
-                    nsString.getLineStart(&lineStart, end: &lineEnd, contentsEnd: nil, forRange: indexRange)
-                    let leadingWhitespaceCountToAdd = nsString.substringWithRange(NSRange(location: lineStart, length: lineEnd - lineStart)).countOfLeadingCharactersInSet(whitespaceAndNewlineCharacterSet)
-                    let leadingWhitespaceToAdd = String(count: leadingWhitespaceCountToAdd, repeatedValue: Character(" "))
+    public func commentBody() -> String? {
+        func attempt(regex: NSRegularExpression) -> String? {
+            let bodyParts = matches(regex).flatMap { match -> [String] in
+                match.ranges.map { range -> String in
+                    guard let range = range else { return "" }
 
-                    let bodySubstring = nsString.substringWithRange(range)
-                    if bodySubstring.containsString("@name") {
+                    var lineStart = self.startIndex
+                    var lineEnd = self.endIndex
+                    self.getLineStart(&lineStart, end: &lineEnd, contentsEnd: nil, forRange: range)
+
+                    let leadingWhitespaceCountToAdd = self[lineStart ..< lineEnd].countOfLeadingCharactersInSet(.whitespaceAndNewlineCharacterSet())
+                    let leadingWhitespaceToAdd = String(count: leadingWhitespaceCountToAdd, repeatedValue: UnicodeScalar(" "))
+
+                    let bodySubstring = self[range]
+                    guard !bodySubstring.containsString("@name") else {
                         return "" // appledoc directive, return empty string
                     }
                     return leadingWhitespaceToAdd + bodySubstring
                 }
             }
-            if bodyParts.count > 0 {
-                return bodyParts
-                    .joinWithSeparator("\n")
-                    .stringByTrimmingTrailingCharactersInSet(whitespaceAndNewlineCharacterSet)
-                    .stringByRemovingCommonLeadingWhitespaceFromLines()
-            }
+
+            guard !bodyParts.isEmpty else { return nil }
+            return bodyParts
+                .joinWithSeparator("\n")
+                .stringByTrimmingTrailingCharactersInSet(.whitespaceAndNewlineCharacterSet())
+                .stringByRemovingCommonLeadingWhitespaceFromLines()
         }
-        return nil
+
+        return attempt(String.CommentMultiLineRegex) ?? attempt(String.CommentSingleLineRegex)
     }
 
     /// Returns a copy of `self` with the leading whitespace common in each line removed.
     public func stringByRemovingCommonLeadingWhitespaceFromLines() -> String {
-        var minLeadingCharacters = Int.max
+        let minLeadingCharacters = lines.lazy.map { line -> Int in
+            guard line.countOfLeadingCharactersInSet(.whitespaceAndNewlineCharacterSet()) != line.utf16.count else { return Int.max }
+            return line.countOfLeadingCharactersInSet(commentLinePrefixCharacterSet)
+        }.minElement() ?? 0
 
-        enumerateLines { line, _ in
-            let lineLeadingWhitespace = line.countOfLeadingCharactersInSet(whitespaceAndNewlineCharacterSet)
-            let lineLeadingCharacters = line.countOfLeadingCharactersInSet(commentLinePrefixCharacterSet)
-            // Is this prefix smaller than our last and not entirely whitespace?
-            if lineLeadingCharacters < minLeadingCharacters && lineLeadingWhitespace != line.characters.count {
-                minLeadingCharacters = lineLeadingCharacters
-            }
-        }
-        var lines = [String]()
-        enumerateLines { line, _ in
-            if line.characters.count >= minLeadingCharacters {
-                lines.append(line[line.startIndex.advancedBy(minLeadingCharacters)..<line.endIndex])
-            } else {
-                lines.append(line)
-            }
-        }
-        return lines.joinWithSeparator("\n")
+        return lines.lazy.map {
+            String($0.utf16.dropFirst(minLeadingCharacters))
+        }.joinWithSeparator("\n")
     }
 
     /**
@@ -537,15 +517,10 @@ extension String {
     - parameter characterSet: Character set to check for membership.
     */
     public func countOfLeadingCharactersInSet(characterSet: NSCharacterSet) -> Int {
-        let utf16View = utf16
-        var count = 0
-        for char in utf16View {
-            if !characterSet.characterIsMember(char) {
-                break
-            }
-            count += 1
+        for (i, char) in utf16.enumerate() where !characterSet.characterIsMember(char) {
+            return i
         }
-        return count
+        return utf16.count
     }
 
     /// Returns a copy of the string by trimming whitespace and the opening curly brace (`{`).
