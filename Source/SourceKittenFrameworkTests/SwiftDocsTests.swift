@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SourceKittenFramework
+@testable import SourceKittenFramework
 import XCTest
 
 func compareJSONStringWithFixturesName(name: String, jsonString: String, file: String = __FILE__, line: UInt = __LINE__) {
@@ -56,21 +56,21 @@ class SwiftDocsTests: XCTestCase {
 
     func testParseFullXMLDocs() {
         let xmlDocsString = "<Type file=\"file\" line=\"1\" column=\"2\"><Name>name</Name><USR>usr</USR><Declaration>declaration</Declaration><Abstract><Para>discussion</Para></Abstract><Parameters><Parameter><Name>param1</Name><Direction isExplicit=\"0\">in</Direction><Discussion><Para>param1_discussion</Para></Discussion></Parameter></Parameters><ResultDiscussion><Para>result_discussion</Para></ResultDiscussion></Type>"
-        let parsed = parseFullXMLDocs(xmlDocsString)!
-        let expected: NSDictionary = [
-            "key.doc.type": "Type",
-            "key.doc.file": "file",
-            "key.doc.line": 1,
-            "key.doc.column": 2,
-            "key.doc.name": "name",
-            "key.usr": "usr",
-            "key.doc.declaration": "declaration",
-            "key.doc.parameters": [[
-                "name": "param1",
-                "discussion": [["Para": "param1_discussion"]]
-            ]],
-            "key.doc.result_discussion": [["Para": "result_discussion"]]
-        ]
-        XCTAssertEqual(toAnyObject(parsed), expected)
+        let parsed = SwiftCursorDocumentation(XMLDocs: xmlDocsString)!
+        XCTAssertEqual(parsed.location.filename, "file")
+        XCTAssertEqual(parsed.location.line, 1)
+        XCTAssertEqual(parsed.location.column, 2)
+        XCTAssertEqual(parsed.location.offset, 0)
+        XCTAssertEqual(parsed.name, "name")
+        XCTAssertEqual(parsed.symbol, "usr")
+        XCTAssertEqual(parsed.declaration, "declaration")
+
+        let paramDiscussion = Parameter(name: "param1", discussion: [
+            .Para("param1_discussion", nil)
+        ])
+        XCTAssert(parsed.documentation.parameters.elementsEqual(CollectionOfOne(paramDiscussion)))
+
+        let returnDiscussion = Text.Para("result_discussion", nil)
+        XCTAssert(parsed.documentation.returnDiscussion.elementsEqual(CollectionOfOne(returnDiscussion)))
     }
 }

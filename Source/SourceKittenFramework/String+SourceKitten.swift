@@ -529,4 +529,49 @@ extension String {
         unwantedSet.addCharactersInString("{")
         return stringByTrimmingCharactersInSet(unwantedSet)
     }
+    
+    func rangeForUTF8(bytes: Range<Int>) -> Range<String.Index>? {
+        let utf8Min = utf8.startIndex, utf8Max = utf8.endIndex
+
+        let utf8Start = utf8Min.advancedBy(bytes.startIndex, limit: utf8Max)
+        guard utf8Start != utf8Max || bytes.isEmpty else { return nil }
+        let utf8End = utf8Start.advancedBy(bytes.count, limit: utf8Max)
+
+        guard let stringStart = utf8Start.samePositionIn(self), stringEnd = utf8End.samePositionIn(self) else { return nil }
+        return stringStart ..< stringEnd
+    }
+
+    typealias LineColumn = (line: Int, column: Int)
+    typealias LineRange = (start: LineColumn, end: LineColumn)
+
+    /**
+    Returns line and column numbers containing starting and ending byte offsets.
+
+    - parameter bytes: Byte range.
+    */
+    func lineRangeForUTF8(bytes: Range<Int>) -> LineRange? {
+        return rangeForUTF8(bytes).map(lineRangeForRange)
+    }
+
+    func lineRangeForRange(range: Range<Index>) -> LineRange {
+        var lineNumber = 0
+        var lastLineStart: String.Index?
+        var maybeStart: (Int, Int)?
+
+        enumerateSubstringsInRange(startIndex ..< range.endIndex, options: [.ByLines, .SubstringNotRequired]) { (_, line, _, _) in
+            lineNumber += 1
+
+            if maybeStart == nil, case line = range.startIndex {
+                maybeStart = (lineNumber, line.startIndex.distanceTo(range.startIndex) + 1)
+            }
+
+            lastLineStart = line.startIndex
+        }
+
+        let end = lastLineStart.map {
+            (lineNumber, $0.distanceTo(range.endIndex) + 1)
+        } ?? (1, 1)
+        let start = maybeStart ?? end
+        return (start, end)
+    }
 }

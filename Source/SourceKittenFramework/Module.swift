@@ -19,17 +19,14 @@ public struct Module {
 
     /// Documentation for this Module. Typically expensive computed property.
     public var docs: [SwiftDocs] {
-        var fileIndex = 1
-        let sourceFilesCount = sourceFiles.count
-        return sourceFiles.flatMap {
-            let filename = ($0 as NSString).lastPathComponent
-            if let file = File(path: $0) {
-                fputs("Parsing \(filename) (\(fileIndex)/\(sourceFilesCount))\n", stderr)
-                fileIndex += 1
-                return SwiftDocs(file: file, arguments: compilerArguments)
+        return sourceFiles.indices.flatMap { fileIndex in
+            let URL = NSURL(fileURLWithPath: sourceFiles[fileIndex], isDirectory: false)
+            guard let name = URL.lastPathComponent, file = File(URL: URL) else {
+                fputs("Could not parse `\(URL)`. Please open an issue at https://github.com/jpsim/SourceKitten/issues with the file contents.\n", stderr)
+                return nil
             }
-            fputs("Could not parse `\(filename)`. Please open an issue at https://github.com/jpsim/SourceKitten/issues with the file contents.\n", stderr)
-            return nil
+            fputs("Parsing \(name) (\(fileIndex)/\(sourceFiles.count))\n", stderr)
+            return SwiftDocs(file: file, arguments: compilerArguments)
         }
     }
 

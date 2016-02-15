@@ -16,8 +16,8 @@ public struct SwiftDocs {
     /// Documented File.
     public let file: File
 
-    /// Docs information as an [String: SourceKitRepresentable].
-    public let docsDictionary: [String: SourceKitRepresentable]
+    /// Docs information as a list of declarations.
+    public let declarations: [SwiftDeclaration]
 
     /**
     Create docs for the specified Swift file and compiler arguments.
@@ -27,7 +27,7 @@ public struct SwiftDocs {
     */
     public init?(file: File, arguments: [String]) {
         do {
-            self.init(
+            try self.init(
                 file: file,
                 dictionary: try Request.EditorOpen(file).failableSend(),
                 cursorInfoRequest: Request.cursorInfoRequestForFilePath(file.path, arguments: arguments)
@@ -40,37 +40,33 @@ public struct SwiftDocs {
         }
     }
 
-    /**
-    Create docs for the specified Swift file, editor.open SourceKit response and cursor info request.
-
-    - parameter file:              Swift file to document.
-    - parameter dictionary:        editor.open response from SourceKit.
-    - parameter cursorInfoRequest: SourceKit dictionary to use to send cursorinfo request.
-    */
-    public init(file: File, dictionary: [String: SourceKitRepresentable], cursorInfoRequest: sourcekitd_object_t?) {
+    private init(file: File, dictionary: [String: SourceKitRepresentable], cursorInfoRequest: sourcekitd_object_t?) throws {
         self.file = file
-        var dictionary = dictionary
-        let syntaxMapData = dictionary.removeValueForKey(SwiftDocKey.SyntaxMap.rawValue) as! [SourceKitRepresentable]
-        let syntaxMap = SyntaxMap(data: syntaxMapData)
-        dictionary = file.processDictionary(dictionary, cursorInfoRequest: cursorInfoRequest, syntaxMap: syntaxMap)
-        if let cursorInfoRequest = cursorInfoRequest {
-            let documentedTokenOffsets = file.contents.documentedTokenOffsets(syntaxMap)
-            dictionary = file.furtherProcessDictionary(
-                dictionary,
-                documentedTokenOffsets: documentedTokenOffsets,
-                cursorInfoRequest: cursorInfoRequest,
-                syntaxMap: syntaxMap
-            )
-        }
-        docsDictionary = dictionary
+        self.declarations = try file.processCursorInfoDictionary(dictionary, cursorInfoRequest: cursorInfoRequest)
     }
+}
+
+extension SwiftDocs: Serializable {
+
+    /// A serialized representation of `self`.
+    func toOutput() -> Output {
+        return .Object([ file.path ?? "<No File>": [
+            SwiftDocKey.Substructure.rawValue: declarations.toObject(),
+            SwiftDocKey.Offset.rawValue: 0,
+            SwiftDocKey.Length.rawValue: file.contents.utf16.count,
+            SwiftDocKey.DiagnosticStage.rawValue: "",
+        ]])
+    }
+
 }
 
 // MARK: CustomStringConvertible
 
 extension SwiftDocs: CustomStringConvertible {
+
     /// A textual JSON representation of `SwiftDocs`.
     public var description: String {
-        return toJSON(toAnyObject([file.path ?? "<No File>": docsDictionary]))
+        return toJSON()
     }
+
 }

@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SourceKittenFramework
+@testable import SourceKittenFramework
 import XCTest
 
 class OffsetMapTests: XCTestCase {
@@ -27,8 +27,10 @@ class OffsetMapTests: XCTestCase {
             "get { return () }\nset {}\n}\n}"
         )
         let documentedTokenOffsets = file.contents.documentedTokenOffsets(SyntaxMap(file: file))
-        let response = file.processDictionary(Request.EditorOpen(file).send(), cursorInfoRequest: nil)
-        let offsetMap = file.generateOffsetMap(documentedTokenOffsets, dictionary: response)
+        let response = try! file.processCursorInfoDictionary(Request.EditorOpen(file).send())
+
+        let offsetMap = file.generateOffsetMap(documentedTokenOffsets, declarations: response)
+
         XCTAssertEqual(offsetMap, [46: 7], "should generate correct offset map of [(declaration offset): (parent offset)]")
     }
 
@@ -36,8 +38,8 @@ class OffsetMapTests: XCTestCase {
         // Struct declarations are parsed by SourceKit, so OffsetMap shouldn't contain its offset.
         let file = File(contents: "/// Doc Comment\nstruct DocumentedStruct {}")
         let documentedTokenOffsets = file.contents.documentedTokenOffsets(SyntaxMap(file: file))
-        let response = file.processDictionary(Request.EditorOpen(file).send(), cursorInfoRequest: nil)
-        let offsetMap = file.generateOffsetMap(documentedTokenOffsets, dictionary: response)
-        XCTAssertEqual(offsetMap, [:], "should generate empty offset map")
+        let response = try! file.processCursorInfoDictionary(Request.EditorOpen(file).send())
+        let offsetMap = file.generateOffsetMap(documentedTokenOffsets, declarations: response)
+        XCTAssert(offsetMap.isEmpty, "should generate empty offset map")
     }
 }

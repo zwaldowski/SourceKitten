@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SourceKittenFramework
+@testable import SourceKittenFramework
 import XCTest
 
 class StringTests: XCTestCase {

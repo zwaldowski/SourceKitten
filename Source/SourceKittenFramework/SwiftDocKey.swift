@@ -63,17 +63,17 @@ internal enum SwiftDocKey: String {
     case DocName              = "key.doc.name"
     /// Parameters of documented token ([SourceKitRepresentable]).
     case DocParameters        = "key.doc.parameters"
-    /// Parsed declaration (String).
-    case DocResultDiscussion  = "key.doc.result_discussion"
-    /// Parsed scope start (Int64).
-    case DocType              = "key.doc.type"
-    /// Parsed scope start end (Int64).
-    case USR                  = "key.usr"
     /// Result discussion documentation of documented token ([SourceKitRepresentable]).
-    case ParsedDeclaration    = "key.parsed_declaration"
+    case DocResultDiscussion  = "key.doc.result_discussion"
     /// Type of documented token (String).
-    case ParsedScopeEnd       = "key.parsed_scope.end"
+    case DocType              = "key.doc.type"
     /// USR of documented token (String).
+    case USR                  = "key.usr"
+    /// Parsed declaration (String).
+    case ParsedDeclaration    = "key.parsed_declaration"
+    /// Parsed scope start (Int64).
+    case ParsedScopeEnd       = "key.parsed_scope.end"
+    /// Parsed scope start end (Int64).
     case ParsedScopeStart     = "key.parsed_scope.start"
 
 
@@ -191,6 +191,17 @@ internal enum SwiftDocKey: String {
     }
 
     /**
+    Get name from dictionary.
+
+    - parameter dictionary: Dictionary to get value from.
+
+    - returns: Name if successful.
+    */
+    internal static func getName(dictionary: [String: SourceKitRepresentable]) -> String? {
+        return get(.Name, dictionary)
+    }
+
+    /**
     Get body offset int from dictionary.
 
     - parameter dictionary: Dictionary to get value from.
@@ -232,5 +243,16 @@ internal enum SwiftDocKey: String {
     */
     internal static func getFullXMLDocs(dictionary: [String: SourceKitRepresentable]) -> String? {
         return get(.FullXMLDocs, dictionary)
+    }
+
+    /**
+    Get accessibility string from dictionary.
+
+    - parameter dictionary: Dictionary to get value from.
+
+    - returns: Accessibility string if successful.
+    */
+    internal static func getAccessibility(dictionary: [String: SourceKitRepresentable]) -> String? {
+        return get(.Accessibility, dictionary)
     }
 }
