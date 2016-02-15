@@ -13,7 +13,14 @@ import Clang_C
 public struct Documentation {
     let parameters: [Parameter]
     let returnDiscussion: [Text]
+}
 
+extension Documentation {
+    init() {
+        self.parameters = []
+        self.returnDiscussion = []
+    }
+    
     init(comment: CXComment) {
         let comments = (0..<comment.count()).map { comment[$0] }
         parameters = comments.filter {

@@ -13,7 +13,9 @@ import Clang_C
 public struct Parameter {
     let name: String
     let discussion: [Text]
+}
 
+extension Parameter {
     init(comment: CXComment) {
         name = comment.paramName() ?? "<none>"
         discussion = comment.paragraph().paragraphToString()
